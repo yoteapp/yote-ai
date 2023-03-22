@@ -155,7 +155,7 @@ export const handleFetchSingleFulfilled = (state, action, cb) => {
 }
 // this is the same as handleFetchSingleFulfilled but it's used for the case where we fetch a single resource from a list
 export const handleFetchSingleFromListFulfilled = (state, action, listKey, cb) => {
-  const { [listKey]: resourceList } = action.payload;
+  const { [listKey]: resourceList, totalCount, totalPages, ...otherData } = action.payload;
   if(resourceList.length > 1) console.error(`More than one resource returned from list fetch. This should not happen. (handleFetchSingleFromListFulfilled for ${listKey} with args ${action.meta.arg})`);
   const resource = resourceList[0];
   // add the resource object to the byId map
@@ -168,6 +168,7 @@ export const handleFetchSingleFromListFulfilled = (state, action, listKey, cb) =
   singleQuery.status = 'fulfilled';
   singleQuery.receivedAt = Date.now();
   singleQuery.expirationDate = utilNewExpirationDate();
+  singleQuery.otherData = otherData || {};
   cb && cb(state, action);
 }
 
@@ -187,7 +188,7 @@ export const handleFetchListPending = (state, action, cb) => {
 }
 
 export const handleFetchListFulfilled = (state, action, listKey, cb) => {
-  const { [listKey]: resourceList, totalPages, totalCount } = action.payload;
+  const { [listKey]: resourceList, totalPages, totalCount, ...otherData } = action.payload;
   // update list query
   // convert the array of objects to a map
   const resourceMap = convertListToMap(resourceList, '_id');
@@ -203,6 +204,7 @@ export const handleFetchListFulfilled = (state, action, listKey, cb) => {
   listQuery.status = 'fulfilled';
   listQuery.receivedAt = Date.now();
   listQuery.expirationDate = utilNewExpirationDate();
+  listQuery.otherData = otherData || {};
 
   // while we're here we might as well add a single query for each of these since we know they're fresh
   resourceList.forEach(resource => {
@@ -234,8 +236,10 @@ export const handleMutationPending = (state, action, cb) => {
   // get the resource id
   const id = updatedResource._id;
   // access or create the query object in the map
-  state.singleQueries[id] = { ...state.singleQueries[id], id: id, status: 'pending', error: null }
-  // optimistic update the version that's in the map
+  state.singleQueries[id] = { ...state.singleQueries[id], id: id, status: 'pending', error: null, failedMutation: null }
+  // save a copy of the original resource on the query object in case we need to revert (or to show the user the original version)
+  state.singleQueries[id].previousVersion = { ...state.byId[id] };
+  // optimistic update the version that's in the map because it's the one that will be used by the component
   state.byId[id] = { ...state.byId[id], ...updatedResource }
   cb && cb(state, action);
 }
@@ -261,9 +265,64 @@ export const handleMutationRejected = (state, action, cb) => {
   const resource = action.meta.arg;
   // update the query object
   const singleQuery = state.singleQueries[resource._id];
+  // set the failed version on the query object in case we need it to show the user the failed version or to reapply their changes
+  singleQuery.failedMutation = resource;
+  // revert the version that's in the map to the previous version
+  state.byId[resource._id] = { ...singleQuery.previousVersion };
+  // remove the previous version from the query object since we didn't update the server
+  delete singleQuery.previousVersion;
   singleQuery.status = 'rejected';
   singleQuery.error = action.error.message;
   singleQuery.receivedAt = Date.now();
+  cb && cb(state, action);
+}
+
+export const handleMutateManyPending = (state, action, cb) => {
+  // action.meta.arg in this case is the array of resource object ids that were sent in the POST
+  const resourceIds = action.meta.arg.ids
+  resourceIds?.forEach(id => {
+    // access or create the query object in the map
+    state.singleQueries[id] = { ...state.singleQueries[id], id: id, status: 'pending', error: null }
+  });
+  cb && cb(state, action);
+}
+
+export const handleMutateManyFulfilled = (state, action, listKey, cb) => {
+  const { [listKey]: resourceList, message } = action.payload;
+  if(resourceList && resourceList.length) {
+    resourceList.forEach(resource => {
+      // replace the previous version in the map with the new one from the server
+      state.byId[resource._id] = resource;
+      // update the query object
+      const singleQuery = state.singleQueries[resource._id];
+      singleQuery.status = 'fulfilled';
+      singleQuery.receivedAt = Date.now();
+      singleQuery.expirationDate = utilNewExpirationDate();
+    });
+    // resources were just updated. Rather than dealing with adding them a list or invalidating specific lists from the component we'll just invalidate the listQueries here.
+    Object.keys(state.listQueries).forEach(queryKey => {
+      state.listQueries[queryKey].didInvalidate = true;
+    });
+  } else {
+    // still need to set the status to fulfilled
+    const resourceIds = action.meta.arg.ids
+    resourceIds?.forEach(id => {
+      // update the query object
+      const singleQuery = state.singleQueries[id];
+      singleQuery.status = 'fulfilled';
+    });
+  }
+  cb && cb(state, action);
+}
+
+export const handleMutateManyRejected = (state, action, cb) => {
+  // action.meta.arg in this case is the array of resource object ids that were sent in the POST
+  const resourceIds = action.meta.arg.ids
+  resourceIds?.forEach(id => {
+    // reset the query object, we don't really want to invalidate the resources since they weren't updated
+    const singleQuery = state.singleQueries[id];
+    singleQuery.status = 'fulfilled';
+  });
   cb && cb(state, action);
 }
 
@@ -372,10 +431,10 @@ const utilNewExpirationDate = () => {
 /**
  * Parse listArgs and endpoint from the arguments passed into the query functions
  * 
- * @param {...string | object | null} args - accepts two optional arguments: a string (endpoint) or an object (listArgs) or both as (endpoint, listArgs)
+ * @param {[...string | object | null]} args - accepts two optional arguments: a string (endpoint) or an object (listArgs) or both as (endpoint, listArgs)
  * @returns {{endpoint: string | null, listArgs: object | string}}
  */
-export const parseQueryArgs = (...args) => {
+export const parseQueryArgs = (args) => {
   // set up defaults
   let endpoint = null;
   let listArgs = 'all';
@@ -388,7 +447,7 @@ export const parseQueryArgs = (...args) => {
       // object means listArgs
       listArgs = arg;
     } else if(!!arg) {
-      console.error('parseQueryArgs: invalid argument passed in, must be a string or an object', arg);
+      console.error(`parseQueryArgs: invalid argument passed in, must be a string or an object, received ${typeof arg}: ${arg}`);
     }
   });
   return { endpoint, listArgs };

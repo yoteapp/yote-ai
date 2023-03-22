@@ -7,7 +7,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 // icons
-import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/outline'
+import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 
 const ListComparator = ({
   change
@@ -20,14 +20,13 @@ const ListComparator = ({
   , required
   , selectedItems = []
 }) => {
-
   const unselectedItems = items.filter(item => !selectedItems.includes(item));
   return (
     <div className={`relative z-0 w-full mb-4 bg-indigo-50 rounded lg:w-auto ${className}`}>
       {label ? (
         <span
           htmlFor={name}
-          className="px-2 text-xs absolute top-0 -z-1 origin-0 text-gray-500 bg-transparent z-10"
+          className="px-2 text-xs absolute top-0 text-gray-500 bg-transparent z-10"
         >
           {label} <sup className="text-red-500">{required ? '*' : null}</sup>
         </span>

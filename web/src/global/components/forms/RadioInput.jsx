@@ -26,27 +26,25 @@ const RadioInput = ({
   , name
   , options
   , value
-  , ...inputProps
 }) => {
 
   return (
-    <div className="mb-4">
-      <label htmlFor={name}>{label}</label>
+    <div className="mb-4 text-left">
+      <label className="text-sm" htmlFor={name}>{label}</label>
       <div className={`flex ${inline ? 'flex-row' : 'flex-col'}`}>
       {options.map((option, i) => (
-        <div key={`${name}_radio_${i}`}className={`p-2 flex items-center w-min hover:${option.disabled ? '' : 'bg-gray-50'} ${option.disabled ? 'opacity-50' : ''}`}>
+        <div key={`${name}_radio_${i}`}className={`pr-2 py-2 flex items-center w-min ${option.val.toString() != value.toString() ? 'opacity-50' : ''}`}>
           <input
             className="h-5 w-5 rounded accent-indigo-600"
             type="radio"
             name={name}
-            value={option.val}
+            value={option.val.toString()}
             onChange={change}
-            checked={option.val === value}
-            {...inputProps}
+            checked={option.val.toString() == value.toString()}
           />
           <label
             htmlFor={name}
-            className={`ml-1 text-xs inline-block whitespace-nowrap`}
+            className={`ml-1 text-sm inline-block whitespace-nowrap`}
           >
             {option.display}
           </label>

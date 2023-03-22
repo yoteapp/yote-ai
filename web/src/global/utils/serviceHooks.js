@@ -24,7 +24,7 @@ import {
  * @param {object} fromStore - the resource specific store that we're getting the resource from (e.g. store.products, store.users, etc)
  * @param {function} sendFetchById - the dispatched action to fetch the resource (e.g. (id) => dispatch(fetchProductById(id)))
  * @param {function} sendInvalidateSingle - the dispatched action to invalidate the resource (e.g. (id) => dispatch(invalidateQuery(id)))
- * @returns an object containing fetch info and eventually the resource (as `data`)
+ * @returns an object containing fetch info and eventually the resource as `data` (see ServiceHookResponse)
  * @returns an invalidate and refetch function for convenience
  */
 export const useGetResourceById = ({
@@ -82,7 +82,7 @@ export const useGetResourceById = ({
  * @param {function} sendFetchBySingle - the dispatched action to fetch the resource (e.g. (id) => dispatch(fetchSingleWithPermission(queryString)))
  * @param {function} sendInvalidateSingle - the dispatched action to invalidate the resource (e.g. (id) => dispatch(invalidateQuery(queryString)))
  * @param {string?} endpoint - the endpoint to be used for the query (e.g. `logged-in`)
- * @returns an object containing fetch info and eventually the resource (as `data`)
+ * @returns an object containing fetch info and eventually the resource as `data` (see ServiceHookResponse)
  * @returns an invalidate and refetch function for convenience
  */
 export const useGetResource = ({
@@ -113,7 +113,7 @@ export const useGetResource = ({
   }, [readyToFetch, sendFetchSingle, queryString, isFocused]);
 
   // get the query info from the store
-  const { status, error } = selectQuery(fromStore, queryString);
+  const { status, error, otherData } = selectQuery(fromStore, queryString);
 
   // get current resource from the store (if it exists)
   const resource = selectSingleByQueryKey(fromStore, queryString);
@@ -136,6 +136,7 @@ export const useGetResource = ({
   // return the info for the caller of the hook to use
   return {
     data: resource
+    , otherData
     , error
     , isFetching
     , isLoading
@@ -154,7 +155,7 @@ export const useGetResource = ({
  * @param {object} fromStore - the resource specific store that we're getting the list from (e.g. store.products, store.users, etc)
  * @param {function} sendFetchList - the dispatched action to fetch the list (e.g. (queryString) => dispatch(fetchProductList(queryString)))
  * @param {function} sendInvalidateSingle - the dispatched action to invalidate the list (e.g. (queryString) => dispatch(invalidateQuery(queryString)))
- * @returns an object containing fetch info and eventually the resource list (as `data`)
+ * @returns an object containing fetch info and eventually the resource list as `data` (see ServiceHookResponse)
  * @returns an invalidate and refetch function for convenience
  */
 export const useGetResourceList = ({
@@ -206,7 +207,7 @@ export const useGetResourceList = ({
   }, [readyToFetch, sendFetchList, queryString, isFocused]);
 
   // get the query info from the store
-  const { status, error, totalPages, totalCount, ids } = selectQuery(fromStore, queryString);
+  const { status, error, totalPages, totalCount, ids, otherData } = selectQuery(fromStore, queryString);
 
   // get current list items (if they exist)
   const resources = selectListItems(fromStore, queryString);
@@ -247,6 +248,7 @@ export const useGetResourceList = ({
   return {
     ids
     , data: resources
+    , otherData: otherData || {}
     , error
     , isFetching
     , isLoading
@@ -262,11 +264,17 @@ export const useGetResourceList = ({
 /**
  * Use this hook to handle the creation or update of a resource.
  * 
- * @param {object} props - props required to access and mutate the resource
- * @param {ServiceHookResponse} props.resourceQuery - the object returned from the resource query hook (e.g. resourceQuery = useGetProductById(productId))
- * @param {function} props.sendMutation - the dispatched action to send the mutation to the server (e.g. (updatedProduct) => dispatch(sendUpdateProduct(updatedProduct)))
- * @param {object?} props.initialState - the initial state we want to apply to the resource returned from the resourceQuery
- * @param {function?} props.onResponse - a callback function that accepts the mutated resource or error
+ * @param {{
+ *  resourceQuery: ServiceHookResponse 
+ * , sendMutation: function
+ * , initialState?: object | undefined
+ * , onResponse?: function | undefined
+ * }} props - an object containing the following properties:
+ * @param props.resourceQuery - the object returned from the resource query hook (e.g. resourceQuery = useGetProductById(productId)) see ServiceHookResponse
+ * @param  props.sendMutation - the dispatched action to send the mutation to the server (e.g. (updatedProduct) => dispatch(sendUpdateProduct(updatedProduct)))
+ * @param props.initialState - the initial state we want to apply to the resource returned from the resourceQuery
+ * @param  props.onResponse - a callback function that accepts the mutated resource or error
+ * @returns an object containing the resource as `data` (see ServiceHookResponse) and form handlers
  */
 export const useMutateResource = ({
   resourceQuery
@@ -295,7 +303,7 @@ export const useMutateResource = ({
   // set up a handleChange method to update nested state while preserving existing state(standard reducer pattern)
   const handleChange = e => {
     const { name, value } = e.target;
-    // use a recursive function to set arbitrailly nested values of any depth (eg. name="key" or name="resource.key" or name="resource.nestedObject.key" etc...)
+    // use a recursive function to set arbitrarily nested values of any depth (eg. name="key" or name="resource.key" or name="resource.nestedObject.key" etc...)
     setFormState(currentState => {
       return utilSetNestedValue(currentState, name, value);
     })
@@ -310,8 +318,14 @@ export const useMutateResource = ({
     sendMutation(newResource).then(response => {
       // set isWaiting false so the component knows we're done waiting on a response
       setIsWaiting(false)
-      // set the returned resource to state so any changes are reflected in the form without a refresh
-      setFormState(response.payload)
+      if(response.error) {
+        // reset the form state to the original resource
+        resetFormState();
+        console.error("An error occured while attempting mutation: ", response.error);
+      } else {
+        // set the returned resource to state so any changes are reflected in the form without a refresh
+        setFormState(response.payload);
+      }
       // send the response to the callback function
       onResponse(response.payload, response.error?.message);
     })
@@ -361,17 +375,19 @@ const utilSetNestedValue = (obj, path, value) => {
 }
 
 
-// TYPES - allows jsdoc comments to give us better intellisense
+ // TYPES - allows jsdoc comments to give us better intellisense
 /**
  * the basic object returned from a standard service hook (e.g. StandardHookResponse = useGetProductById(productId))
  * @typedef {object} ServiceHookResponse
- * @property {object} data - the data returned from the store
- * @property {array?} ids - an array of the fetched resource ids from the `data` object (list fetches)
+ * @property {object} data - the data returned from the store (an object for single fetches, an array of objects for list fetches)
+ * @property {array?} ids - an array of the fetched resource ids from the `data` object (list fetches only)
  * @property {string?} error - the error message returned from the store
  * @property {boolean} isFetching - whether the service is fetching
  * @property {boolean} isError - whether the fetch returned an error
  * @property {boolean} isEmpty - whether the fetch returned no data
  * @property {boolean} isLoading - whether the fetch is loading (fetching with no current data)
  * @property {boolean} isSuccess - whether the fetch has returned successfully
+ * @property {function} invalidate - a function to invalidate the resource in the store so it will refetch the next time it's accessed
+ * @property {function} refetch - a function to refetch the resource from the server immediately
  * 
  */

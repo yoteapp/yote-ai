@@ -4,6 +4,37 @@ import './App.css';
 import routes from './config/routes';
 import DefaultLayout from './global/components/layouts/DefaultLayout';
 
+
+/**
+ * We add these listeners to prevent the default browser behavior when a file is dragged over the window which is to open/download the file
+ * The problem arises when a user drags a file over the window and then drops it on a non-file input element.
+ * By preventing the default behavior, we can prevent the file from being opened/downloaded EXCEPT when the user drops the file on a file
+ * input element (which is handled in the `FileInput` component by setting input.dropzone true).
+ */
+window.addEventListener("dragenter", function (e) {
+  if(!e.target.dropzone) {
+    e.preventDefault();
+    e.dataTransfer.effectAllowed = "none";
+    e.dataTransfer.dropEffect = "none";
+  }
+}, false);
+
+window.addEventListener("dragover", function (e) {
+  if(!e.target.dropzone) {
+    e.preventDefault();
+    e.dataTransfer.effectAllowed = "none";
+    e.dataTransfer.dropEffect = "none";
+  }
+});
+
+window.addEventListener("drop", function (e) {
+  if(!e.target.dropzone) {
+    e.preventDefault();
+    e.dataTransfer.effectAllowed = "none";
+    e.dataTransfer.dropEffect = "none";
+  }
+});
+
 function App() {
   useEffect(() => {
     // we are using lazy loading to load our resource routers to reduce the initial bundle size

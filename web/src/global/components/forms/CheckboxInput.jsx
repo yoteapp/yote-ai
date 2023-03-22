@@ -6,7 +6,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Tooltip from '../helpers/Tooltip';
-import { InformationCircleIcon } from '@heroicons/react/outline';
+import { InformationCircleIcon } from '@heroicons/react/24/outline';
 
 const CheckboxInput = ({
   change
@@ -19,7 +19,6 @@ const CheckboxInput = ({
   , value
   , ...inputProps
 }) => {
-
   return (
     <div className="mb-4">
       <div className={`p-2 pb-0 flex items-center w-min hover:${disabled ? '' : 'bg-gray-50'}`}>
@@ -43,11 +42,11 @@ const CheckboxInput = ({
           {...inputProps}
         />
         {label ? (
-           <label
-           htmlFor={name}
-           className={`ml-1 text-xs inline-block whitespace-nowrap`}
+          <label
+            htmlFor={name}
+            className={`ml-1 text-xs inline-block whitespace-nowrap`}
           >
-            {label} {required && <sup className="">*</sup>}
+            {label} {required && <sup className="text-red-500">*</sup>}
             {helpText && (
               <Tooltip text={helpText}>
                 <InformationCircleIcon className="h-4 w-4 text-gray-500" />
@@ -59,7 +58,6 @@ const CheckboxInput = ({
           null
         }
       </div>
-      {/* {helpText && <small className="pl-2 text-xs text-gray-500"><em>{helpText}</em></small>} */}
     </div>
   )
 }
@@ -68,7 +66,10 @@ CheckboxInput.propTypes = {
   change: PropTypes.func.isRequired
   , disabled: PropTypes.bool
   , helpText: PropTypes.any
-  , label: PropTypes.string
+  , label: PropTypes.oneOfType([
+    PropTypes.string
+    , PropTypes.element
+  ])
   , name: PropTypes.string.isRequired
   , placeholder: PropTypes.string
   , required: PropTypes.bool

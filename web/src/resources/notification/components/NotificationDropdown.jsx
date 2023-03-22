@@ -8,7 +8,7 @@ import PropTypes from 'prop-types'
 // import components
 // heroicons/react is a library of SVG icons from the tailwindcss/heroicons project, which is licensed under the MIT license
 // https://github.com/tailwindlabs/heroicons#react
-import { BellIcon } from '@heroicons/react/solid'
+import { BellIcon } from '@heroicons/react/24/solid'
 
 // import global components
 import WaitOn from '../../../global/components/helpers/WaitOn'
