@@ -52,46 +52,53 @@ export const useIsFocused = () => {
 /**
  * 
  * @param {object} defaultValues - an object of default values to assign to the url search params (if they aren't already there)
- * @returns {[searchParams: searchParams, handleChange: Function]} an array with an object containing the search params as key/value pairs and a function to update the search params object
+ * @returns {[queryObject: object, setURLParams: Function]} an array with an object containing the search params as key/value pairs and a function to update the search params object
  */
 export const useURLSearchParams = (defaultValues = {}) => {
   const location = useLocation();
   const history = useHistory();
-  const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
+  // on mount, set default values
   useEffect(() => {
-    // on mount, set default values
     Object.keys(defaultValues).forEach(key => {
-      // if the search param doesn't exist, set it to the default value, otherwise leave the value as is in the url
-      if(!urlSearchParams.has(key)) {
-        urlSearchParams.set(key, defaultValues[key].toString());
+      if(!searchParams.has(key)) {
+        searchParams.set(key, defaultValues[key].toString());
       }
     });
-    // update the url with the default search params, use replace so we don't add a new history entry (we only want to update the url on mount and not add a new history entry)
-    history.replace({ search: urlSearchParams.toString() });
-    // (react complains about missing dependencies, but we only want this to run on mount, so we disable the console warning)
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    history.replace({ search: searchParams.toString() });
+  }, []);
 
   // return an object of key value pairs matching the search params to be used in list query
-  const searchParams = useMemo(() => {
+  const queryObject = useMemo(() => {
     const obj = {};
-    urlSearchParams?.forEach((value, key) => {
+    searchParams?.forEach((value, key) => {
       obj[key] = value;
     });
     return obj;
-  }, [urlSearchParams]);
+  }, [searchParams]);
 
-  const handleChange = useCallback((name, value) => {
-    // set the search param if needed
-    if(urlSearchParams?.get(name) !== value) {
-      urlSearchParams?.set(name, value);
-      // reset page to 1 when changing any other query param
-      if(urlSearchParams?.has('page') && name !== 'page') {
-        urlSearchParams?.set('page', '1');
+  // accepts an object of key/value pairs to update OR a single key/value pair as before, useful for updating multiple params at once
+  const setURLParams = useCallback((...args) => {
+    if(args.length === 2) {
+      const [key, value] = args;
+      if(searchParams?.get(key) !== value) {
+        searchParams?.set(key, value);
       }
-      history.push({ search: urlSearchParams?.toString() });
+      history.push({ search: searchParams?.toString() });
+    } else if(args.length === 1 && typeof args[0] === 'object') {
+      const [obj] = args;
+      Object.keys(obj).forEach(key => {
+        if(searchParams?.get(key) !== obj[key]) {
+          searchParams?.set(key, obj[key]);
+        }
+      });
+      history.push({ search: searchParams?.toString() });
+    } else {
+      throw new Error('useURLSearchParams: `handleChange` must be called with either a key/value pair or an object of key/value pairs, received: ' + args + '.');
     }
-  }, [urlSearchParams, history])
+  }, [searchParams, history]);
 
-  return [searchParams, handleChange];
+
+  return [queryObject, setURLParams];
 }
