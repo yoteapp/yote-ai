@@ -19,7 +19,6 @@ const EmailInput = ({
   , value
   , ...inputProps
 }) => {
-
   const [email, setEmail] = useState(value);
   const [error, setError] = useState(null);
 
@@ -49,11 +48,11 @@ const EmailInput = ({
   }
 
   return (
-    <div className="relative z-0 w-full mb-4 lg:w-auto">
-      {label ? (
+    <div className="relative z-0 w-full mb-4 text-left lg:w-auto">
+      { label ? (
         <label
           htmlFor={name}
-          className="px-2 text-xs absolute top-0 -z-1 origin-0 text-gray-500 bg-transparent z-10"
+          className="px-2 pt-1 text-xs absolute top-0 text-gray-500 bg-transparent z-10"
         >
           {label} <sup className="text-red-500">{required ? '*' : null}</sup>
         </label>
@@ -69,7 +68,7 @@ const EmailInput = ({
         required={required}
         type="email"
         value={email}
-        className={`px-2 text-base ${label ? 'pt-4 pb-1' : 'pt-2 pb-3'} block w-full mt-0 border-2 rounded appearance-none focus:outline-none focus:ring-0 focus:border-indigo-600 border-transparent disabled:opacity-70`}
+        className={`px-2 text-base ${label ? 'pt-5 pb-1' : 'pt-3 pb-3'} block w-full mt-0`}
         {...inputProps}
       />
       {error && <div className="text-xs text-red-800">{error}</div>}

@@ -18,15 +18,13 @@ const TextAreaInput = ({
   , required
   , rows
   , value
-  , ...inputProps
 }) => {
-
   return (
-    <div className="relative z-0 w-full mb-4 lg:w-auto">
-      { label ? (
+    <div className="relative z-0 w-full mb-4 text-left lg:w-auto">
+      {label ? (
         <label
           htmlFor={name}
-          className="px-2 text-xs absolute duration-300 top-0 -z-1 origin-0 text-gray-500"
+          className="px-2 pt-1 text-xs absolute top-0 text-gray-500 bg-transparent z-10"
         >
           {label} <sup className="text-red-500">{required ? '*' : null}</sup>
         </label>
@@ -35,7 +33,7 @@ const TextAreaInput = ({
         null
       }
       <textarea
-        className={`px-2 text-base ${label ? 'pt-4 pb-1' : 'pt-2 pb-3'} block w-full mt-0 border-2 rounded appearance-none focus:outline-none focus:ring-0 focus:border-indigo-600 border-transparent`}
+        className={`px-2 text-base ${label ? 'pt-5 pb-1' : 'pt-3 pb-3'} block w-full mt-0`}
         cols={cols}
         disabled={disabled}
         maxLength={maxlength}
@@ -45,7 +43,6 @@ const TextAreaInput = ({
         required={required}
         rows={rows}
         value={value}
-        {...inputProps}
       />
       {helpText && <small className="text-xs text-gray-500"><em>{helpText}</em></small>}
     </div>
