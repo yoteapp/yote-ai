@@ -27,7 +27,7 @@ module.exports = (router, app) => {
     fs.readFile(indexHtmlPath, 'utf8', (err, indexHtml) => {
       if(err) {
         console.error('Something went wrong:', err);
-        return res.status(500).send('Oops, better luck next time!');
+        return res.status(500).send('Something went wrong, try refreshing the page.');
       }
       // inject current user into the html by replacing the __CURRENT_USER__ placeholder in the html file. Info: https://create-react-app.dev/docs/title-and-meta-tags#injecting-data-from-the-server-into-the-page
       // use `serialize` library to eliminate risk of XSS attacks when embedding JSON in html. Info: https://medium.com/node-security/the-most-common-xss-vulnerability-in-react-js-applications-2bdffbcc1fa0

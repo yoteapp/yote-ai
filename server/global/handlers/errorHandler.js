@@ -2,7 +2,7 @@
 const YoteError = require('../helpers/YoteError')
 
 module.exports = (error, req, res, next) => {
-  console.log("catching error") 
+  console.log("catching error in handler") 
 
   /**
    * goal here is unified error catching
@@ -27,11 +27,13 @@ module.exports = (error, req, res, next) => {
   console.log("stack", error.stack)
   console.log("name", error.name)
 
-  if(error instanceof YoteError) {
+  if(res.headersSent) {
+    // an error thrown after a response has been sent (like on logout when mongo-connect is 'Unable to find a session to touch'), just log it and move on.
+    console.log("error above came after response sent, moving on")
+  } else if(error instanceof YoteError) {
     console.log("custom yote error")
     res.status(error.statusCode).send(error.message)
   } else {
-    
     // send default "server 500" error
     res.status(500).send(error.message)
   }
