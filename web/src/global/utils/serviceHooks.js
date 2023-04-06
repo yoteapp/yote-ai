@@ -290,13 +290,14 @@ export const useMutateResource = ({
 
   useEffect(() => {
     // once we have the fetched resource, set it to state
-    if(resourceQuery.data) {
-      setFormState((currentState) => {
-        // override the resource object with anything that was passed in as initialState
-        return { ...resourceQuery.data, ...currentState }
+    // make sure we only do this if necessary to avoid an infinite loop
+    if(resourceQuery.data && !_.isEqual({ ...resourceQuery.data, ...newResource, ...initialState }, newResource)) {
+      // override the resource object with anything that was passed in as initialState
+      setFormState(currentState => {
+        return { ...resourceQuery.data, ...currentState, ...initialState }
       });
     }
-  }, [resourceQuery.data])
+  }, [resourceQuery.data, initialState])
 
   // FORM HANDLERS
   // setFormState will replace the entire resource object with the new resource object
