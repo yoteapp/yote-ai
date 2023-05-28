@@ -221,11 +221,15 @@ export const handleFetchListFulfilled = (state, action, listKey, cb) => {
   // while we're here we might as well add a single query for each of these since we know they're fresh
   resourceList.forEach(resource => {
     // udpate or create the query object for it in the singleQueries map
-    const singleQuery = state.singleQueries[resource._id] || {};
-    singleQuery.id = resource._id;
-    singleQuery.status = listQuery.status;
-    singleQuery.receivedAt = listQuery.receivedAt;
-    singleQuery.expirationDate = listQuery.expirationDate;
+    state.singleQueries[resource._id] = {
+      ...state.singleQueries?.[resource._id]
+      , id: resource._id
+      , status: 'fulfilled'
+      , receivedAt: listQuery.receivedAt
+      , expirationDate: listQuery.expirationDate
+      , didInvalidate: false
+      , error: null
+    };
   });
   cb && cb(state, action);
 }
