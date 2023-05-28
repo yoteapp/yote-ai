@@ -22,7 +22,7 @@ const CreateProduct = () => {
   const history = useHistory();
   const location = useLocation();
 
-  const { data: product, handleChange, handleSubmit, ...productQuery } = useCreateProduct({
+  const { data: product, handleChange, handleSubmit, isChanged, ...productQuery } = useCreateProduct({
     // optional, anything we want to add to the default object
     initialState: {
       // someKey: someValue
@@ -49,6 +49,7 @@ const CreateProduct = () => {
           formType='create'
           handleChange={handleChange}
           handleSubmit={handleSubmit}
+          isChanged={isChanged}
         />
       </WaitOn>
     </ProductLayout>

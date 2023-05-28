@@ -42,7 +42,7 @@ const ProductList = () => {
           {...pageControls} // must pass controls since this component is handling pagination on its own
           className={`${productQuery.isFetching ? 'opacity-50' : ''}`}
         >
-          <WaitOn query={productQuery} fallback={<Skeleton count={pagination.per} />}>
+          <WaitOn query={productQuery} fallback={<Skeleton count={5} />}>
             {products?.map(product => <ProductListItem key={product._id} id={product._id} />)}
             {/* {ids?.map(productId => <ProductListItem key={productId} id={productId} />)} */}
           </WaitOn>

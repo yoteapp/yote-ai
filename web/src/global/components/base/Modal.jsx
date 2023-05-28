@@ -9,6 +9,7 @@ const Modal = ({
   children = null
   , closeText = 'Cancel'
   , confirmText = 'Confirm'
+  , disabled = false
   , handleClose
   , handleConfirm
   , isOpen = false
@@ -68,6 +69,7 @@ const Modal = ({
                       type="button"
                       className="w-full mx-1"
                       onClick={handleConfirm}
+                      disabled={disabled}
                     >
                       {confirmText}
                     </button>
@@ -89,6 +91,7 @@ Modal.propTypes = {
   ]).isRequired
   , closeText: PropTypes.string
   , confirmText: PropTypes.string
+  , disabled: PropTypes.bool
   , handleClose: PropTypes.func.isRequired
   , handleConfirm: PropTypes.func
   , isOpen: PropTypes.bool
