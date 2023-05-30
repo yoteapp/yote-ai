@@ -20,6 +20,7 @@ const ProductForm = ({
   , formType
   , handleChange
   , handleSubmit
+  , isChanged
   , product
 }) => {
 
@@ -64,7 +65,7 @@ const ProductForm = ({
               Cancel
             </Link>
             <button
-              disabled={disabled}
+              disabled={disabled || !isChanged}
               type="submit"
             >
               {buttonText}
@@ -83,6 +84,7 @@ ProductForm.propTypes = {
   , formType: PropTypes.string.isRequired
   , handleChange: PropTypes.func.isRequired
   , handleSubmit: PropTypes.func.isRequired
+  , isChanged: PropTypes.bool.isRequired
   , product: PropTypes.object.isRequired
 }
 

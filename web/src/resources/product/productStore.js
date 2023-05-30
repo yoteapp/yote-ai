@@ -22,6 +22,7 @@ import {
   , handleInvalidateQuery
   , handleInvalidateQueries
   , handleAddSingleToList
+  , handleAddManyToList
 } from '../../global/utils/storeUtils';
 
 
@@ -30,7 +31,7 @@ import {
 // define and export the strings for the different specific product endpoints once here because the idea of using strings in the component gives me hives.
 // we'll catch for these strings on the server side and apply the correct permissions to the query.
 // these are passed in to the productService hooks at the component level as the endpoint argument.
-// export const myExampleEndpoint = 'example-endpoint';
+// export const myExampleEndpoint = 'logged-in';
 /**
  * The functions below, called thunks, allow us to perform async logic. They
  * can be dispatched like a regular action: `dispatch(incrementAsync(10))`. This
@@ -132,6 +133,7 @@ export const productSlice = createSlice({
     invalidateQuery: handleInvalidateQuery
     , invalidateQueries: handleInvalidateQueries
     , addProductToList: handleAddSingleToList
+    , addProductsToList: handleAddManyToList
   }
 
   /**
@@ -182,7 +184,7 @@ export const productSlice = createSlice({
 });
 
 // export the actions for the reducers defined above
-export const { invalidateQuery, invalidateQueries, addProductToList } = productSlice.actions;
+export const { invalidateQuery, invalidateQueries, addProductToList, addProductsToList } = productSlice.actions;
 
 
 // We can also write thunks by hand, which may contain both sync and async logic.

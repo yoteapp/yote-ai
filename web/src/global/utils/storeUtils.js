@@ -115,6 +115,18 @@ export const handleAddSingleToList = (state, action, cb) => {
   cb && cb(state, action)
 }
 
+export const handleAddManyToList = (state, action, cb) => {
+  const { queryKey, ids } = action.payload;
+  const query = state.listQueries[queryKey];
+  if(query) {
+    // add to the list of ids and remove duplicates
+    query.ids = [...new Set([...query.ids, ...ids])];
+  } else {
+    console.log('Could not find list');
+  }
+  cb && cb(state, action)
+}
+
 export const handleCreateFulfilled = (state, action, cb) => {
   // console.log('action', action);
   const resource = action.payload;
@@ -208,14 +220,16 @@ export const handleFetchListFulfilled = (state, action, listKey, cb) => {
 
   // while we're here we might as well add a single query for each of these since we know they're fresh
   resourceList.forEach(resource => {
-    // add a single query for the resource.
-    const singleQuery = {
-      id: resource._id
-      , status: listQuery.status
+    // udpate or create the query object for it in the singleQueries map
+    state.singleQueries[resource._id] = {
+      ...state.singleQueries?.[resource._id]
+      , id: resource._id
+      , status: 'fulfilled'
       , receivedAt: listQuery.receivedAt
       , expirationDate: listQuery.expirationDate
+      , didInvalidate: false
+      , error: null
     };
-    state.singleQueries[resource._id] = singleQuery;
   });
   cb && cb(state, action);
 }
@@ -232,13 +246,14 @@ export const handleFetchListRejected = (state, action, cb) => {
 
 export const handleMutationPending = (state, action, cb) => {
   // action.meta.arg in this case is the updated resource object that was sent in the PUT
-  const updatedResource = action.meta.arg
+  const { endpoint, queryKey, ...updatedResource } = action.meta.arg
   // get the resource id
   const id = updatedResource._id;
+  const singleQueryKey = queryKey || id;
   // access or create the query object in the map
-  state.singleQueries[id] = { ...state.singleQueries[id], id: id, status: 'pending', error: null, failedMutation: null }
+  state.singleQueries[singleQueryKey] = { ...state.singleQueries[singleQueryKey], id: id, status: 'pending', error: null, failedMutation: null }
   // save a copy of the original resource on the query object in case we need to revert (or to show the user the original version)
-  state.singleQueries[id].previousVersion = { ...state.byId[id] };
+  state.singleQueries[singleQueryKey].previousVersion = { ...state.byId[id] };
   // optimistic update the version that's in the map because it's the one that will be used by the component
   state.byId[id] = { ...state.byId[id], ...updatedResource }
   cb && cb(state, action);
@@ -246,10 +261,13 @@ export const handleMutationPending = (state, action, cb) => {
 
 export const handleMutationFulfilled = (state, action, cb) => {
   const resource = action.payload;
+  const { queryKey } = action.meta.arg;
+  const id = resource._id;
+  const singleQueryKey = queryKey || id;
   // replace the previous version in the map with the new one from the server
   state.byId[resource._id] = resource;
   // update the query object
-  const singleQuery = state.singleQueries[resource._id];
+  const singleQuery = state.singleQueries[singleQueryKey]
   singleQuery.status = 'fulfilled';
   singleQuery.receivedAt = Date.now();
   singleQuery.expirationDate = utilNewExpirationDate();
@@ -262,13 +280,15 @@ export const handleMutationFulfilled = (state, action, cb) => {
 
 export const handleMutationRejected = (state, action, cb) => {
   // action.meta.arg in this case is the updated resource object that was sent in the PUT
-  const resource = action.meta.arg;
+  const { endpoint, queryKey, ...resource } = action.meta.arg
+  const id = resource._id;
+  const singleQueryKey = endpoint || id;
   // update the query object
-  const singleQuery = state.singleQueries[resource._id];
+  const singleQuery = state.singleQueries[singleQueryKey];
   // set the failed version on the query object in case we need it to show the user the failed version or to reapply their changes
   singleQuery.failedMutation = resource;
   // revert the version that's in the map to the previous version
-  state.byId[resource._id] = { ...singleQuery.previousVersion };
+  state.byId[id] = { ...singleQuery.previousVersion };
   // remove the previous version from the query object since we didn't update the server
   delete singleQuery.previousVersion;
   singleQuery.status = 'rejected';
@@ -289,15 +309,17 @@ export const handleMutateManyPending = (state, action, cb) => {
 
 export const handleMutateManyFulfilled = (state, action, listKey, cb) => {
   const { [listKey]: resourceList, message } = action.payload;
-  if(resourceList && resourceList.length) {
+  if (resourceList && resourceList.length) {
+    const receivedAt = Date.now();
+    const expirationDate =  utilNewExpirationDate();
     resourceList.forEach(resource => {
       // replace the previous version in the map with the new one from the server
       state.byId[resource._id] = resource;
       // update the query object
       const singleQuery = state.singleQueries[resource._id];
       singleQuery.status = 'fulfilled';
-      singleQuery.receivedAt = Date.now();
-      singleQuery.expirationDate = utilNewExpirationDate();
+      singleQuery.receivedAt = receivedAt;
+      singleQuery.expirationDate = expirationDate;
     });
     // resources were just updated. Rather than dealing with adding them a list or invalidating specific lists from the component we'll just invalidate the listQueries here.
     Object.keys(state.listQueries).forEach(queryKey => {
@@ -429,7 +451,7 @@ const utilNewExpirationDate = () => {
 }
 
 /**
- * Parse listArgs and endpoint from the arguments passed into the query functions
+ * Parse listArgs and endpoint from the arguments passed into the query hooks
  * 
  * @param {[...string | object | null]} args - accepts two optional arguments: a string (endpoint) or an object (listArgs) or both as (endpoint, listArgs)
  * @returns {{endpoint: string | null, listArgs: object | string}}

@@ -25,9 +25,9 @@ const ProductListItem = ({ id }) => {
 // custom loading skeleton for this component, by defining it right here we can keep it synced with any changes we make to the actual component above
 const Skeleton = () => {
   return (
-    <li className="animate-pulse list-none p-2 block">
-      <p className='bg-gray-600 h-4 w-48 mt-1'></p>
-      <p className='bg-gray-400 h-4 w-56 mt-1'></p>
+    <li className="animate-pulse list-none p-2 block cursor-default select-none">
+      <p className='bg-gray-600 text-gray-600 w-fit'>Product Title</p>
+      <p className='bg-gray-400 text-gray-400 w-fit'>This is a sample product description</p>
     </li>
   )
 }

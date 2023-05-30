@@ -45,9 +45,9 @@ const SingleProduct = () => {
     // }
     // </ProductLayout>
     <ProductLayout title={'Single Product'}>
-      <WaitOn query={productQuery} fallback={<Skeleton />}>
-        <div className={productQuery.isFetching ? 'opacity-50' : ''}>
-          <h2>Product details</h2>
+      <div className={productQuery.isFetching ? 'opacity-50' : ''}>
+        <h2>Product details</h2>
+        <WaitOn query={productQuery} fallback={<Skeleton />}>
           <h1> {product?.title} </h1>
           <p> {product?.description} </p>
           <CheckboxInput // clicking the checkbox will change the product in the store using the handleChange function
@@ -63,9 +63,9 @@ const SingleProduct = () => {
               <button disabled={productQuery.isFetching} onClick={handleSubmit}>Save</button>
             </div>
           )}
-        </div>
-        <Link to={`${location.pathname}/update`}>Update Product</Link>
-      </WaitOn>
+        </WaitOn>
+      </div>
+      <Link to={`${location.pathname}/update`}>Update Product</Link>
     </ProductLayout>
   )
 }
@@ -73,10 +73,15 @@ const SingleProduct = () => {
 const Skeleton = () => {
   return (
     <div className="animate-pulse">
-      <p className="w-48 h-5 bg-gray-400"/>
-      <p className="h-1"/>
-      <p className="w-64 h-5 bg-gray-400" />
-      <p className="h-1"/>
+      <h1 className='bg-gray-600 text-gray-600 w-fit'> Product Title </h1>
+      <p className='bg-gray-400 text-gray-400 w-fit'> This is a sample product description </p>
+      <CheckboxInput
+        label='Featured'
+        name='featured'
+        value={false}
+        disabled={true}
+        change={() => { }}
+      />
     </div>
   )
 }

@@ -6,23 +6,27 @@
 
 import { useSelector, useDispatch } from 'react-redux'
 import apiUtils from '../../global/utils/api';
-import { selectSingleById } from '../../global/utils/storeUtils';
+import { parseQueryArgs, selectSingleById } from '../../global/utils/storeUtils';
 
 // import all of the actions from the store
 import {
   fetchProductList
+  , fetchProductListAtEndpoint
   , fetchListIfNeeded
   , fetchSingleProduct
+  , fetchSingleProductAtEndpoint
   , sendCreateProduct
   , sendUpdateProduct
   , sendDeleteProduct
   , invalidateQuery
   // , invalidateQueries
   , addProductToList
+  , addProductsToList
   , fetchSingleIfNeeded
 } from './productStore';
 import {
   useGetResourceById
+  , useGetResource
   , useGetResourceList
   , useMutateResource
 } from '../../global/utils/serviceHooks';
@@ -116,23 +120,45 @@ export const useGetProductById = (id, forceFetch = false) => {
 }
 
 /**
+ * This hook will check for a fresh product in the store and fetch a new one if necessary
+ * 
+ * @param {...string | object | null} args - accepts two optional arguments: a string (endpoint) or an object (listArgs) or both as (endpoint, listArgs)
+ * @returns an object containing fetch info and eventually the product (as `data`)
+ * @returns an invalidate and refetch function for convenience
+ */
+ export const useGetProduct = (...args) => {
+  const dispatch = useDispatch();
+  const { endpoint, listArgs } = parseQueryArgs(args);
+ // set up product specific stuff to be used by the shared hook
+ const productStore = useSelector(({ product }) => product);
+ const fetchProduct = endpoint ? fetchSingleProductAtEndpoint : fetchSingleProduct;
+ const sendFetchSingle = (queryString) => dispatch(fetchSingleIfNeeded(queryString, fetchProduct));
+ const sendInvalidateSingle = (queryString) => dispatch(invalidateQuery(queryString));
+ // return the (now product specific) hook
+ return useGetResource({ listArgs, fromStore: productStore, sendFetchSingle, sendInvalidateSingle, endpoint });
+}
+
+/**
  * This hook will check for a fresh list in the store and fetch a new one if necessary
  * 
- * @param {object} listArgs - an object used to construct the query
- * @param {boolean} forceFetch - optional override to force a fetch from the server
+ * @param {...string | object | null} args - accepts two optional arguments: a string (endpoint) or an object (listArgs) or both as (endpoint, listArgs)
  * @returns an object containing fetch info and eventually the product list (as `data`)
  * @returns an invalidate and refetch function for convenience
  */
-export const useGetProductList = (listArgs = {}, forceFetch = false) => {
+export const useGetProductList = (...args) => {
   const dispatch = useDispatch();
+  const { endpoint, listArgs } = parseQueryArgs(args);
   // set up product specific stuff to be used by the shared hook
   const productStore = useSelector(({ product }) => product);
-  const fetchProducts = forceFetch ? fetchProductList : fetchListIfNeeded;
-  const sendFetchList = (queryString) => dispatch(fetchProducts(queryString));
+  // if an endpoint was passed in, use that, otherwise use the default
+  const fetchProducts = endpoint ? fetchProductListAtEndpoint : fetchProductList;
+  const fetchProductsIfNeeded = (queryString) => fetchListIfNeeded(queryString, fetchProducts);
+  const sendFetchList = (queryString) => dispatch(fetchProductsIfNeeded(queryString));
   const sendInvalidateList = (queryString) => dispatch(invalidateQuery(queryString));
+  const addToList = (queryString) => (productIds) => dispatch(addProductsToList({ queryString, ids: productIds }))
 
   // return the (now product specific) hook
-  return useGetResourceList({ listArgs, fromStore: productStore, sendFetchList, sendInvalidateList });
+  return useGetResourceList({ listArgs, fromStore: productStore, sendFetchList, sendInvalidateList, endpoint, addToList });
 }
 
 // UPDATE
