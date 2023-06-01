@@ -46,7 +46,7 @@ export const shouldFetch = (query) => {
  * items: [{_id: 1, name: "first"}, {_id: 2, name: "second"}, etc...]
  * returns: {1: {_id: 1, name: "first"}, 2: {_id: 2, name: "second"}, etc...}
  */
-export const convertListToMap = (items, key = '_id') => {
+export const convertListToMap = (items = [], key = '_id') => {
   return items.reduce((acc, curr) => {
     acc[curr[key]] = curr
     return acc
@@ -200,7 +200,7 @@ export const handleFetchListPending = (state, action, cb) => {
 }
 
 export const handleFetchListFulfilled = (state, action, listKey, cb) => {
-  const { [listKey]: resourceList, totalPages, totalCount, ...otherData } = action.payload;
+  const { [listKey]: resourceList = [], totalPages, totalCount, ...otherData } = action.payload;
   // update list query
   // convert the array of objects to a map
   const resourceMap = convertListToMap(resourceList, '_id');
@@ -245,10 +245,11 @@ export const handleFetchListRejected = (state, action, cb) => {
 }
 
 export const handleMutationPending = (state, action, cb) => {
-  // action.meta.arg in this case is the updated resource object that was sent in the PUT
+  // action.meta.arg in this case is the updated resource object that was sent in the PUT plus the endpoint and queryKey if used
   const { endpoint, queryKey, ...updatedResource } = action.meta.arg
   // get the resource id
   const id = updatedResource._id;
+  // use the queryKey if it exists, otherwise use the id
   const singleQueryKey = queryKey || id;
   // access or create the query object in the map
   state.singleQueries[singleQueryKey] = { ...state.singleQueries[singleQueryKey], id: id, status: 'pending', error: null, failedMutation: null }
@@ -279,7 +280,7 @@ export const handleMutationFulfilled = (state, action, cb) => {
 }
 
 export const handleMutationRejected = (state, action, cb) => {
-  // action.meta.arg in this case is the updated resource object that was sent in the PUT
+  // action.meta.arg in this case is the updated resource object that was sent in the PUT plus the endpoint and queryKey if used
   const { endpoint, queryKey, ...resource } = action.meta.arg
   const id = resource._id;
   const singleQueryKey = endpoint || id;
@@ -308,8 +309,8 @@ export const handleMutateManyPending = (state, action, cb) => {
 }
 
 export const handleMutateManyFulfilled = (state, action, listKey, cb) => {
-  const { [listKey]: resourceList, message } = action.payload;
-  if (resourceList && resourceList.length) {
+  const { [listKey]: resourceList } = action.payload;
+  if(resourceList && resourceList.length) {
     const receivedAt = Date.now();
     const expirationDate =  utilNewExpirationDate();
     resourceList.forEach(resource => {
@@ -451,15 +452,15 @@ const utilNewExpirationDate = () => {
 }
 
 /**
- * Parse listArgs and endpoint from the arguments passed into the query hooks
+ * Parse listArgs and endpoint from the arguments passed into the query hook
  * 
- * @param {[...string | object | null]} args - accepts two optional arguments: a string (endpoint) or an object (listArgs) or both as (endpoint, listArgs)
- * @returns {{endpoint: string | null, listArgs: object | string}}
+ * @param {[string | object | null]} args - accepts two optional arguments: a string (endpoint) or an object (listArgs) or both as (endpoint, listArgs)
+ * @returns {{endpoint: string | null, listArgs: object}}
  */
 export const parseQueryArgs = (args) => {
   // set up defaults
   let endpoint = null;
-  let listArgs = 'all';
+  let listArgs = {}; // default to empty object which will fetch all from the given endpoint
   // loop through the args to determine what was passed in
   args?.forEach(arg => {
     if(typeof arg === 'string') {

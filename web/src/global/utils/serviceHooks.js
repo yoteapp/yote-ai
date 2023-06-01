@@ -385,6 +385,7 @@ export const useMutateResource = ({
     , handleUndoUpdate: resourceQuery.previousVersion ? handleUndoMutation : null // this will be null if there is no previous version (e.g. if we're creating a new resource instead of updating an existing one)
     , setFormState // only used if we want to handle this in a component, will usually use handleChange
     , resetFormState // only used if we want to reset the form to the original state
+    , sendMutation // only used if we want to send data directly from the component, will usually use handleSubmit which pulls the data from form state
     , isChanged: isChanged
     // override isFetching if we're waiting for the mutated resource to get returned from the server (for ui purposes)
     , isFetching: isWaiting || resourceQuery.isFetching
