@@ -19,11 +19,12 @@ const apiUtils = {
     if(response.ok) {
       return response.json();
     } else {
-      // server returned an error
-      return response.json().then(error => {
-        // need to throw the error so redux thunk knows to trigger the 'rejected' action.
-        throw error;
+      const error = await response.json().catch(unhandledError => {
+        // catch unhandled server errors
+        console.error('Unhandled Error Thrown by Server. Not cool.', unhandledError)
+        throw 'Something went wrong';
       });
+      throw error;
     }
   }
 
@@ -75,6 +76,9 @@ const apiUtils = {
   , objectFromQueryString(queryString) {
     // convert search string into object notation
     // ex: ?page=1&per=20 to { page: '1', per: '20' }
+    // first grab just the query string meaning everything after the "?"
+    queryString = queryString?.split("?")[1];
+    if(!queryString) return {};
     return queryString.replace("?", "").split("&")
       .map(item => item.split("="))
       .map(item => [_.camelCase(item[0]), item[1]]) // convert kebab case to camel case, ie. "end-date" => "endDate"
@@ -86,14 +90,16 @@ const apiUtils = {
       // if "" dont add it, otherwise add key:value to return object
       .reduce((returnObj, item) => { return item[0].length > 0 ? { ...returnObj, [item[0]]: item[1] } : returnObj }, {})
   }
+  /**
+   * Checks if listArgs are ready to be fetched
+   * returns false if 1. listArgs is falsy, or 2. listArgs is an object with any undefined or empty array values
+   * returns true if listArgs is an object with no undefined or empty array values (this includes an empty object which is valid listArgs)
+   * @param {object} listArgs - an object containing the listArgs to be checked
+   */
   , checkListArgsReady(listArgs) {
     // can't fetch if no list args are provided
     if(!listArgs) return false;
-    // if listArgs is a string, return true
-    if(typeof listArgs === "string") return true;
-    // if listArgs is an empty object, return false
-    if(Object.keys(listArgs).length === 0) return false;
-    
+    if(typeof listArgs !== "object") return false; 
     let listArgsReady = true;
     // if ANY list args are undefined or an array with 0 length, flip the boolean false
     Object.keys(listArgs).forEach(key => {
