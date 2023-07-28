@@ -95,7 +95,9 @@ export const useGetResource = ({
   , endpoint
 }) => {
   if(!listArgs) throw new Error('useGetResource requires listArgs');
-  const readyToFetch = apiUtils.checkListArgsReady(listArgs);
+  // if endpoint is null then we are not yet ready to fetch
+  const readyToFetch = endpoint !== null && apiUtils.checkListArgsReady(listArgs);
+
   const isFocused = useIsFocused();
 
   // convert the query object to a query string for the new server api
@@ -182,7 +184,9 @@ export const useGetResourceList = ({
   */
 
   // first make sure all list args are present. If any are undefined we will wait to fetch.
-  const readyToFetch = apiUtils.checkListArgsReady(listArgs);
+  // if endpoint is null then we are not yet ready to fetch
+  const readyToFetch = endpoint !== null && apiUtils.checkListArgsReady(listArgs);
+
 
   // handle pagination right here as part of the fetch so we don't have to call usePagination every time from each component
   // this also allows us to pre-fetch the next page(s)
@@ -294,18 +298,27 @@ export const useMutateResource = ({
   // set up a state variable to hold the resource, start with what was passed in as initialState (or an empty object)
   const [newResource, setFormState] = useState(initialState);
   // set up a state variable to hold the isWaiting flag
-  const [isWaiting, setIsWaiting] = useState(false)
+  const [isWaiting, setIsWaiting] = useState(false);
 
+  // sometimes initial state can change after required data is returned from the server, so we need to update the form state
+  useEffect(() => {
+    if(!_.isEqual({ ...newResource, ...initialState }, newResource)) {
+      setFormState(currentState => {
+        return { ...currentState, ...initialState }
+      });
+    }
+  }, [initialState])
+  
   useEffect(() => {
     // once we have the fetched resource, set it to state
     // make sure we only do this if necessary to avoid an infinite loop
-    if(resourceQuery.data && !_.isEqual({ ...resourceQuery.data, ...newResource, ...initialState }, newResource)) {
-      // override the resource object with anything that was passed in as initialState
+    if(resourceQuery.data && !_.isEqual({ ...resourceQuery.data, ...newResource }, newResource)) {
+      // override the resource object with the currentState (which will be the initialState if any)
       setFormState(currentState => {
-        return { ...resourceQuery.data, ...currentState, ...initialState }
+        return { ...resourceQuery.data, ...currentState }
       });
     }
-  }, [resourceQuery.data, initialState])
+  }, [resourceQuery.data])
 
   // FORM HANDLERS
   // setFormState will replace the entire resource object with the new resource object

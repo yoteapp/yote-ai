@@ -40,7 +40,6 @@ module.exports = {
         // but then it doesnt effect the subsequent query
         next();
       }
-
     }
   }
 
