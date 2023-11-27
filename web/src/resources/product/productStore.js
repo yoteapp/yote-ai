@@ -191,7 +191,7 @@ export const productSlice = createSlice({
 });
 
 // export the actions for the reducers defined above
-export const { invalidateQuery, invalidateQueries, addProductToList, addProductsToList } = productSlice.actions;
+export const { invalidateQuery, invalidateQueries, addProductToList, addProductsToList, removeProductsFromList } = productSlice.actions;
 
 
 // We can also write thunks by hand, which may contain both sync and async logic.

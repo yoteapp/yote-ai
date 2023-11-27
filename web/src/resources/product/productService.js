@@ -22,6 +22,7 @@ import {
   // , invalidateQueries
   , addProductToList
   , addProductsToList
+  , removeProductsFromList
   , fetchSingleIfNeeded
 } from './productStore';
 import {
