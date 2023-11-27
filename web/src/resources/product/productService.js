@@ -155,10 +155,12 @@ export const useGetProductList = (...args) => {
   const fetchProductsIfNeeded = (queryString) => fetchListIfNeeded(queryString, fetchProducts);
   const sendFetchList = (queryString) => dispatch(fetchProductsIfNeeded(queryString));
   const sendInvalidateList = (queryString) => dispatch(invalidateQuery(queryString));
-  const addToList = (queryString) => (productIds) => dispatch(addProductsToList({ queryString, ids: productIds }))
+  const addToList = (queryString, productIds) => dispatch(addProductsToList({ queryString, ids: productIds }));
+  const removeFromList = (queryKey, productIds) => dispatch(removeProductsFromList({ queryKey, ids: productIds }));
+
 
   // return the (now product specific) hook
-  return useGetResourceList({ listArgs, fromStore: productStore, sendFetchList, sendInvalidateList, endpoint, addToList });
+  return useGetResourceList({ listArgs, fromStore: productStore, sendFetchList, sendInvalidateList, endpoint, addToList, removeFromList });
 }
 
 // UPDATE

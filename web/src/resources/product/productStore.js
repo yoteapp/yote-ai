@@ -23,6 +23,7 @@ import {
   , handleInvalidateQueries
   , handleAddSingleToList
   , handleAddManyToList
+  , handleRemoveManyFromList
 } from '../../global/utils/storeUtils';
 
 
@@ -139,6 +140,7 @@ export const productSlice = createSlice({
     , invalidateQueries: handleInvalidateQueries
     , addProductToList: handleAddSingleToList
     , addProductsToList: handleAddManyToList
+    , removeProductsFromList: handleRemoveManyFromList
   }
 
   /**
