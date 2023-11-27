@@ -253,10 +253,14 @@ export const useGetResourceList = ({
   }
 
   const addIdsToList = (newIds) => {
+    if(!newIds) return;
+    if(typeof newIds === 'string') newIds = [newIds];
     addToList(queryString, newIds);
   }
 
   const removeIdsFromList = (removeIds) => {
+    if(!removeIds) return;
+    if(typeof removeIds === 'string') removeIds = [removeIds];
     removeFromList(queryString, removeIds);
   }
 

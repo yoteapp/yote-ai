@@ -129,6 +129,11 @@ export const handleAddManyToList = (state, action, cb) => {
 
 export const handleRemoveManyFromList = (state, action, cb) => {
   const { queryKey, ids } = action?.payload || {};
+  if(!ids) {
+    console.error('handleRemoveManyFromList: no ids passed in');
+    cb && cb(state, action);
+    return;
+  }
   const query = state.listQueries[queryKey];
   if(query && ids) {
     // remove the ids from the list
