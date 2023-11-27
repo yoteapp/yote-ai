@@ -63,9 +63,7 @@ exports.getDefault = async (req, res) => {
 
 // list api functions
 exports.getListWithArgs = async (req, res) => {
-  // console.log(req.params)
-  const { query, pagination, sort } = apiUtils.buildMongoQueryFromUrlQuery(req.query);
-  // console.log("after parse", query, pagination, sort)
+  const { query, pagination, sort } = await apiUtils.buildMongoQueryFromUrlQuery(req.query);
   const users = await User.find(query)
     .skip(pagination ? (pagination.page - 1) * pagination.per : null)
     .limit(pagination ? pagination.per : null)

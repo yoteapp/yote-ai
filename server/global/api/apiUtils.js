@@ -1,5 +1,5 @@
 
-exports.buildMongoQueryFromUrlQuery = urlQuery => {
+exports.buildMongoQueryFromUrlQuery = async urlQuery => {
   let newQuery = {...urlQuery}
   let pagination, sort, limit;
   if(newQuery.page && newQuery.per) {

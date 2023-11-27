@@ -83,7 +83,7 @@ exports.getDefault = async (req, res) => {
 
 // list api functions
 exports.getListWithArgs = async (req, res) => {
-  const { query, pagination, sort, limit } = apiUtils.buildMongoQueryFromUrlQuery(req.query);
+  const { query, pagination, sort, limit } = await apiUtils.buildMongoQueryFromUrlQuery(req.query);
   // get count so we can determine total pages for front end to allow proper pagination
   const count = pagination ? await Product.countDocuments(query) : null
   const totalPages = count && Math.ceil(count / pagination.per)
