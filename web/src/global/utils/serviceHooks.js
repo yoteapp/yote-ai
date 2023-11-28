@@ -169,6 +169,7 @@ export const useGetResourceList = ({
   , sendFetchList
   , sendInvalidateList
   , addToList
+  , removeFromList = () => { }
   , endpoint
 }) => {
   // isFocused is used to make sure we rerender when this screen comes into focus. This way invalidated lists will be refetched without having to interact with the page.
@@ -252,13 +253,22 @@ export const useGetResourceList = ({
   }
 
   const addIdsToList = (newIds) => {
+    if(!newIds) return;
+    if(typeof newIds === 'string') newIds = [newIds];
     addToList(queryString, newIds);
+  }
+
+  const removeIdsFromList = (removeIds) => {
+    if(!removeIds) return;
+    if(typeof removeIds === 'string') removeIds = [removeIds];
+    removeFromList(queryString, removeIds);
   }
 
   // return the info for the caller of the hook to use
   return {
     ids
     , addIdsToList
+    , removeIdsFromList
     , data: resources
     , otherData: otherData || {}
     , error

@@ -129,6 +129,11 @@ export const handleAddManyToList = (state, action, cb) => {
 
 export const handleRemoveManyFromList = (state, action, cb) => {
   const { queryKey, ids } = action?.payload || {};
+  if(!ids) {
+    console.error('handleRemoveManyFromList: no ids passed in');
+    cb && cb(state, action);
+    return;
+  }
   const query = state.listQueries[queryKey];
   if(query && ids) {
     // remove the ids from the list
@@ -242,7 +247,7 @@ export const handleFetchListFulfilled = (state, action, listKey, cb) => {
   listQuery.otherData = otherData || {};
 
   // while we're here we might as well add a single query for each of these since we know they're fresh
-  resourceList.forEach(resource => {
+  resourceList?.forEach(resource => {
     // udpate or create the query object for it in the singleQueries map
     state.singleQueries[resource._id] = state.singleQueries[resource._id] || {};
     state.singleQueries[resource._id] = {

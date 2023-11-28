@@ -94,7 +94,7 @@ exports.deleteSingle = async (req, res) => {
 
 // list api functions
 exports.getListWithArgs = async (req, res) => {
-  const { query, pagination, sort } = apiUtils.buildMongoQueryFromUrlQuery(req.query);
+  const { query, pagination, sort } = await apiUtils.buildMongoQueryFromUrlQuery(req.query);
   // restrict to only the logged in user's notifications
   query._user = req.user._id;
   // get count so we can determine total pages for front end to allow proper pagination
