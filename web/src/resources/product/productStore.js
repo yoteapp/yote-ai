@@ -4,10 +4,12 @@ import apiUtils from '../../global/utils/api';
 
 import {
   handleCreateFulfilled
+  , handleFetchSingleIfNeeded
   , handleFetchSinglePending
   , handleFetchSingleFulfilled
   , handleFetchSingleFromListFulfilled
   , handleFetchSingleRejected
+  , handleFetchListIfNeeded
   , handleFetchListPending
   , handleFetchListFulfilled
   , handleFetchListRejected
@@ -17,7 +19,6 @@ import {
   , handleDeletePending
   , handleDeleteFulfilled
   , handleDeleteRejected
-  , shouldFetch
   , INITIAL_STATE
   , handleInvalidateQuery
   , handleInvalidateQueries
@@ -198,22 +199,13 @@ export const { invalidateQuery, invalidateQueries, addProductToList, addProducts
 // Here's an example of conditionally dispatching actions based on current state.
 // updated to accept a listFetch function so we can use it for other list fetches
 export const fetchListIfNeeded = (queryKey, listFetch = fetchProductList) => (dispatch, getState) => {
-  const productQuery = getState().product.listQueries[queryKey];
-  if(shouldFetch(productQuery)) {
-    // console.log('Fetching product list', queryKey);
-    dispatch(listFetch(queryKey));
-  } else {
-    // console.log('No need to fetch, fresh query in cache');
-  }
+  const productStore = getState().product;
+  return handleFetchListIfNeeded(dispatch, productStore, listFetch, queryKey, 'products');
 };
 
 export const fetchSingleIfNeeded = (id, singleFetch = fetchSingleProduct) => (dispatch, getState) => {
-  const productQuery = getState().product.singleQueries[id];
-  if(shouldFetch(productQuery)) {
-    dispatch(singleFetch(id));
-  } else {
-    // console.log('No need to fetch, fresh query in cache');
-  }
+  const productStore = getState().product;
+  return handleFetchSingleIfNeeded(dispatch, productStore, singleFetch, id);
 }
 
 export default productSlice.reducer;
