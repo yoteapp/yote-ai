@@ -24,12 +24,20 @@ const SingleProduct = () => {
   // get the product from the store (or fetch it from the server)
   // const { data: product, ...productQuery } = useGetProductById(productId);
   // as example of how we can update the product without using the standard form, use the hook to get the product and the stuff needed to update it.
-  const { data: product, handleChange, handleSubmit, isChanged, setFormState, resetFormState, ...productQuery } = useGetUpdatableProduct(productId);
+  const { data: product, handleChange, handleSubmit, isChanged, setFormState, sendMutation, resetFormState, ...productQuery } = useGetUpdatableProduct(productId);
   // if you need information stored on `product` to perform other fetches use the examples below
   // NOTE: if any listArg value (`category` in this case) is undefined then the hook will wait to perform the fetch
   // const { data: relatedProducts, ...relatedProductsQuery } = useGetProductList({ category: product?.category })
   // NOTE: if the id is undefined then the hook will wait to perform the fetch
   // const { data: otherResource, ...otherResourceQuery } = useGetOtherResourceById(product?._otherResource);
+
+  // by using the sendMutation function we can essentially patch the product in one go without setting the form state at all
+  const handleToggleFeatured = () => {
+    sendMutation({ featured: !product.featured }).then(res => {
+      // can do stuff with the response here if needed
+    });
+  }
+
 
   return (
     // <ProductLayout title={'Single Product'}>
@@ -57,6 +65,7 @@ const SingleProduct = () => {
             disabled={!product}
             change={handleChange}
           />
+          <button onClick={handleToggleFeatured}>Toggle Featured</button>
           {isChanged && ( // if the product has been changed then show the save button, clicking it will dispatch the update action and save the product to the server
             <div>
               <button disabled={productQuery.isFetching} onClick={resetFormState}>Cancel</button>
