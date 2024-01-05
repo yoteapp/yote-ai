@@ -577,3 +577,30 @@ export const parseQueryArgs = (args) => {
   });
   return { endpoint, listArgs };
 }
+
+
+/**
+ * 
+ * @param {String} endpointTemplate - a string with optional placeholders for arguments (e.g. 'products/:id')
+ * @returns {Function} a function that accepts an optional object of arguments and returns a string with the placeholders replaced with the argument values (e.g. 'products/123')
+ */
+export const createEndpoint = (endpointTemplate) => {
+  return function(args = {}) {
+    let endpoint = endpointTemplate;
+
+    // Replace each placeholder in the template with the corresponding value from the args object
+    for (const [key, value] of Object.entries(args)) {
+      if (value === undefined) {
+        return null;
+      }
+      endpoint = endpoint.replace(`:${key}`, value);
+    }
+
+    // If there are any remaining placeholders in the endpoint, return null
+    if (/:[a-zA-Z0-9_]+/.test(endpoint)) {
+      return null;
+    }
+
+    return endpoint;
+  };
+}
