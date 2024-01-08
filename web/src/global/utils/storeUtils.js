@@ -582,7 +582,7 @@ export const parseQueryArgs = (args) => {
 /**
  * 
  * @param {String} endpointTemplate - a string with optional placeholders for arguments (e.g. 'products/:id')
- * @returns {Function} a function that accepts an optional object of arguments and returns a string with the placeholders replaced with the argument values (e.g. 'products/123')
+ * @returns {Function} a function that accepts an optional object of arguments and returns a string with the placeholders replaced with the argument values (e.g. ({id: 123}) => 'products/123')
  */
 export const createEndpoint = (endpointTemplate) => {
   return function(args = {}) {

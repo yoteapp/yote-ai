@@ -81,6 +81,18 @@ exports.getDefault = async (req, res) => {
   res.json(defaultProduct);
 }
 
+exports.getLoggedInList = async (req, res) => {
+  console.log('getting logged in list');
+  // do stuff with req.user then return list
+  return exports.getListWithArgs(req, res);
+}
+
+exports.testNewUpdateEndpoint = async (req, res) => {
+  console.log('Updating at special endpoint', { ['req.params.someSpecialParam']: req.params.someSpecialParam })
+  // do stuff with someSpecialParam then update
+  return exports.updateSingleById(req, res);
+}
+
 // list api functions
 exports.getListWithArgs = async (req, res) => {
   const { query, pagination, sort, limit } = await apiUtils.buildMongoQueryFromUrlQuery(req.query);

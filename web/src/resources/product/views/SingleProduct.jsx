@@ -8,7 +8,7 @@ import WaitOn from '../../../global/components/helpers/WaitOn';
 
 // import services
 // import { useGetProductById } from '../productService';
-import { useGetUpdatableProduct } from '../productService';
+import { useGetUpdatableProduct, useSpecialUpdatableProduct } from '../productService';
 
 // import resource components
 import ProductLayout from '../components/ProductLayout.jsx'
@@ -24,7 +24,8 @@ const SingleProduct = () => {
   // get the product from the store (or fetch it from the server)
   // const { data: product, ...productQuery } = useGetProductById(productId);
   // as example of how we can update the product without using the standard form, use the hook to get the product and the stuff needed to update it.
-  const { data: product, handleChange, handleSubmit, isChanged, setFormState, sendMutation, resetFormState, ...productQuery } = useGetUpdatableProduct(productId);
+  // const { data: product, handleChange, handleSubmit, isChanged, setFormState, sendMutation, resetFormState, ...productQuery } = useGetUpdatableProduct(productId);
+  const { data: product, handleChange, handleSubmit, isChanged, setFormState, sendMutation, resetFormState, ...productQuery } = useSpecialUpdatableProduct({ id: productId, someSpecialParam: 'super-special-string'})
   // if you need information stored on `product` to perform other fetches use the examples below
   // NOTE: if any listArg value (`category` in this case) is undefined then the hook will wait to perform the fetch
   // const { data: relatedProducts, ...relatedProductsQuery } = useGetProductList({ category: product?.category })
@@ -33,7 +34,7 @@ const SingleProduct = () => {
 
   // by using the sendMutation function we can essentially patch the product in one go without setting the form state at all
   const handleToggleFeatured = () => {
-    sendMutation({ featured: !product.featured }).then(res => {
+    sendMutation({ featured: !product.featured }).then(({payload, error}) => {
       // can do stuff with the response here if needed
     });
   }

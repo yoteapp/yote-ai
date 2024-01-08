@@ -5,6 +5,7 @@ const { requireLogin, requireAccountAccess } = require('../../global/handlers/au
 module.exports = (router) => {
 
   router.get('/api/products/default', product.getDefault)
+  router.get('/api/products/logged-in', product.getLoggedInList)
   router.get('/api/products/:id', product.getSingleById)
 
 
@@ -20,7 +21,8 @@ module.exports = (router) => {
   // router.post('/api/products', product.createSingle)
   router.post('/api/products', requireLogin, product.createSingle);
 
-  router.put('/api/products/:id', requireLogin, product.updateSingleById);
+  router.put('/api/products/:id', product.updateSingleById);
+  router.post('/api/products/special/:someSpecialParam/:id', product.testNewUpdateEndpoint);
 
   router.delete('/api/products/:id', requireLogin, product.deleteSingle);
 
