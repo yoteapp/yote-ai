@@ -81,8 +81,6 @@ exports.getDefault = async (req, res) => {
   res.json(defaultProduct);
 }
 
-
-
 // list api functions
 exports.getListWithArgs = async (req, res) => {
   const { query, pagination, sort, limit } = await apiUtils.buildMongoQueryFromUrlQuery(req.query);

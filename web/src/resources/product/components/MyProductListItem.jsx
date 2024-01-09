@@ -1,4 +1,4 @@
-
+// an example of a component using a custom update endpoint
 
 // import primary libraries
 import React from 'react';
@@ -13,14 +13,17 @@ import { useProductFromMap, useUpdateProductByLoggedInUser } from '../productSer
 
 const MyProductListItem = ({ id }) => {
   const product = useProductFromMap(id);
+  // get the custom update action
   const { sendUpdateProduct } = useUpdateProductByLoggedInUser({ id })
   
   const handleToggleFavorite = () => {
+    // call the custom update action with our allowed updates
     sendUpdateProduct({ userFavorite: !product.userFavorite }).then(({ payload: updatedProduct, error }) => {
       if(error) {
         alert('An error occurred while updating the product');
       } else {
         // can do stuff with the response here if needed
+        console.log('updatedProduct', updatedProduct);
       }
     });
   }

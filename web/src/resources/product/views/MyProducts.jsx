@@ -1,4 +1,5 @@
 // View for route '/products/mine'
+// An example of how we use a custom hook to fetch a filtered list of products, in this case those created by the logged in user
 
 // import primary libraries
 import React from 'react'
@@ -34,7 +35,7 @@ const MyProducts = () => {
     <ProductLayout title={'Product List'}>
       <section className="max-w-screen-lg border border-solid bg-white shadow-sm rounded-sm mx-auto">
         <header className="flex items-center justify-between border-solid border-t-0 border-l-0 border-r-0 border-b p-2">
-          <h1 className="p-2 m-0">Product List</h1>
+          <h1 className="p-2 m-0">My Products</h1>
           <div className="p-2">
             <Link to="/products/new-with-restriction" className="text-sm p-2 px-8 rounded-full border-solid bg-white text-gray-800 border-gray-800 cursor-pointer no-underline font-semibold">New Product With Restrictions</Link>
           </div>

@@ -1,7 +1,8 @@
 /**
  * View component for /products/new-with-restriction
- *
- * Creates a new product from a copy of the defaultItem in the product store
+ * An example of how we can create a product with a custom restriction
+ * Requires a requiredParam that will be checked on the server before creating the product
+ * If the requiredParam is not present or does not match the required value, the server will return an error
  */
 
 // import primary libraries
@@ -22,6 +23,7 @@ const CreateProductWithRestriction = () => {
   const history = useHistory();
   const location = useLocation();
 
+  // This hook has the same signature as the useCreateProduct hook, but it requires a requiredParam that will be checked on the server before creating the product
   const { data: product, handleChange, handleSubmit, isChanged, ...productQuery } = useCreateProductWithRequiredParams({
     // optional, anything we want to add to the default object
     initialState: {
@@ -36,7 +38,8 @@ const CreateProductWithRestriction = () => {
         history.replace(`/products/${newProduct._id}`, location.state);
       }
     }
-    , requiredParam: 'super-fancy' // this is checked on the server before creating the product
+    // this is checked on the server before creating the product
+    , requiredParam: 'super-fancy'
     // , requiredParam: 'this-will-fail'
   });
 

@@ -72,7 +72,7 @@ const ProductRouter = () => {
         login={true}
         exact
         path="/products/:productId/update"
-      // admin={true}
+        // admin={true}
       />
     </Switch>
   )

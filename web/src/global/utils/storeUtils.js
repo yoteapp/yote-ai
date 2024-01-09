@@ -578,7 +578,6 @@ export const parseQueryArgs = (args) => {
   return { endpoint, listArgs };
 }
 
-
 /**
  * 
  * @param {String} endpointTemplate - a string with optional placeholders for arguments (e.g. 'products/:id')

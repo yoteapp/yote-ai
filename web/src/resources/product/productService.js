@@ -323,6 +323,7 @@ export const useProductListByLoggedIn = (query) => {
 }
 
 // UPDATE BY LOGGED IN USER
+// BONUS: if you search the codebase for the string `logged-in/:id` you'll quickly find the server side implementation of this endpoint because it's the same syntax as express
 const updateProductByLoggedInUserEndpoint = createEndpoint('logged-in/:id');
 /**
  * This is an example of how we implement a custom update endpoint, in this case for a logged in user.
@@ -371,7 +372,9 @@ export const useGetUpdatableProductByLoggedInUser = ({ id, onResponse = () => { 
 const createProductWithRequiredParamsEndpoint = createEndpoint('special/:requiredParam');
 
 /**
- * 
+ * This is an example of a custom create endpoint. In this case we require a requiredParam to be passed in.
+ * This could be used to pass into middleware to check permissions, or otherwise enforce some kind of restriction.
+ * @note this is a contrived example, but the pattern is useful for more complex cases
  * @param {args} args - an object containing the following:
  * @param {string} args.requiredParam - the required param for the endpoint
  * @param {object} args.initialState - the initial state of the product (optional)
