@@ -1,5 +1,5 @@
 /**
- * This set of hooks is how we'll interact with the productStore. The idea is to provide a simple api to get what
+ * This set of hooks is how we'll interact with the productStore. The idea is to provide a simple hooks-based api to get what
  * we need from the store without having to use `dispatch`, `connect`, `mapStoreToProps`, and all that stuff
  * in the components.
  */

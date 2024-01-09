@@ -380,6 +380,22 @@ export const useMutateResource = ({
     setFormState({ ...resourceQuery.data, ...initialState });
   }
 
+  // wrap the sendMutation function to handle everything we need to do after the mutation
+  // return a thenable object so we can chain additional actions after the mutation in the component
+  /**
+   * 
+   * @param {object} data - the resource to be sent to the server
+   * @returns the thenable response from the server ({ payload: resource, error: error })
+   */
+  const sendMutationWithComponentData = (data) => {
+    const dataToSend = { ...newResource, ...data}
+    return sendMutation(dataToSend).then((response) => {
+      handleResponse(response);
+      return response;
+    })
+  }
+
+
   /**
    * Undo the last mutation (for updates only). Dispatches the original update action with previous version of the resource (if one exists)
    * @param {SyntheticEvent} e - the form submit event
@@ -408,7 +424,7 @@ export const useMutateResource = ({
     , handleUndoUpdate: resourceQuery.previousVersion ? handleUndoMutation : null // this will be null if there is no previous version (e.g. if we're creating a new resource instead of updating an existing one)
     , setFormState // only used if we want to handle this in a component, will usually use handleChange
     , resetFormState // only used if we want to reset the form to the original state
-    , sendMutation // only used if we want to send data directly from the component, will usually use handleSubmit which pulls the data from form state
+    , sendMutation: sendMutationWithComponentData // only used if we want to send data directly from the component, will usually use handleSubmit which pulls the data from form state
     , isChanged: isChanged
     // override isFetching if we're waiting for the mutated resource to get returned from the server (for ui purposes)
     , isFetching: isWaiting || resourceQuery.isFetching

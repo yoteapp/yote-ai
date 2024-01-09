@@ -298,6 +298,7 @@ export const handleMutationFulfilled = (state, action, cb) => {
   // replace the previous version in the map with the new one from the server
   state.byId[resource._id] = resource;
   // update the query object
+  state.singleQueries[singleQueryKey] = state.singleQueries[singleQueryKey] || {};
   const singleQuery = state.singleQueries[singleQueryKey]
   singleQuery.status = 'fulfilled';
   singleQuery.receivedAt = Date.now();
@@ -414,6 +415,72 @@ export const handleDeleteRejected = (state, action, cb) => {
   singleQuery.receivedAt = Date.now();
   cb && cb(state, action);
 }
+
+/**
+ * 
+ * @param {Function} dispatch - the dispatch function from the useDispatch hook
+ * @param {Object} store - the resource specific store (e.g. productStore)
+ * @param {Function} listFetch - the fetch action creator defined in the resource store (e.g. fetchProductList)
+ * @param {string} queryKey - the key used to access the query from the store
+ * @param {string} listKey - the name of the list returned from the server (e.g. `products`)
+ * @returns 
+ */
+export const handleFetchListIfNeeded = (dispatch, store, listFetch, queryKey, listKey) => {
+  // validate arguments
+  if(!dispatch || !store || !listFetch || !queryKey || !listKey) {
+    console.error('handleFetchListIfNeeded: missing arguments');
+    return;
+  }
+  const query = store.listQueries[queryKey];
+  if(shouldFetch(query)) {
+    // console.log(`Fetching ${listKey} list, queryKey);
+    return dispatch(listFetch(queryKey));
+  } else {
+    // console.log('No need to fetch, fresh query in cache');
+    // return a resolved promise so we can still chain off this function if we want, just as we return the dispatch above so we can chain off that.
+    // first get the current list
+    const currentList = selectListItems(store, queryKey);
+    return Promise.resolve({
+      payload: {
+        [listKey]: currentList
+        , totalPages: query.totalPages
+        , currentPage: query.currentPage
+      }
+      , error: null
+    })
+  }
+}
+
+/**
+ * 
+ * @param {Function} dispatch - the dispatch function from the useDispatch hook
+ * @param {Object} store - the resource specific store (e.g. productStore)
+ * @param {Function} singleFetch - the fetch action creator defined in the resource store (e.g. fetchSingleProduct)
+ * @param {*} queryKey 
+ * @returns 
+ */
+export const handleFetchSingleIfNeeded = (dispatch, store, singleFetch, queryKey) => {
+  // validate arguments
+  if(!dispatch || !store || !singleFetch || !queryKey) {
+    console.error('handleFetchSingleIfNeeded: missing arguments');
+    return;
+  }
+  const query = store.singleQueries[queryKey];
+  if(shouldFetch(query)) {
+    // console.log(`Fetching single, queryKey);
+    return dispatch(singleFetch(queryKey));
+  } else {
+    // console.log('No need to fetch, fresh query in cache');
+    // return a resolved promise so we can still chain off this function if we want, just as we return the dispatch above so we can chain off that.
+    // first get the current single
+    const currentSingle = selectSingleByQueryKey(store, queryKey);
+    return Promise.resolve({
+      payload: currentSingle
+      , error: null
+    })
+  }
+}
+
 
 /**
  * The functions below are called a selectors and allow us to select a value from
