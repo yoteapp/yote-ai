@@ -7,6 +7,8 @@ const productSchema = mongoose.Schema({
   , title:                  { type: String, required: '{PATH} is required!', unique: true }
   , description:            { type: String }
   , featured:               { type: Boolean, default: false }
+  , userFavorite:           { type: Boolean, default: false } // this is a contrived example to show how a user could update their own product with a custom endpoint
+  , _createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
   
 });
 

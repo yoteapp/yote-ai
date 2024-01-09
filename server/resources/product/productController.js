@@ -17,7 +17,7 @@ exports.getSingleById = async (req, res) => {
 }
 
 exports.createSingle = async (req, res) => {
-  const newProduct = new Product(req.body)
+  const newProduct = new Product({...req.body, _createdBy: req.user._id})
   const product = await newProduct.save().catch(err => {
     console.log(err)
     throw new YoteError("Error creating Product", 404)
@@ -81,35 +81,74 @@ exports.getDefault = async (req, res) => {
   res.json(defaultProduct);
 }
 
-exports.getLoggedInList = async (req, res) => {
-  console.log('getting logged in list');
-  // do stuff with req.user then return list
-  return exports.getListWithArgs(req, res);
-}
 
-exports.testNewUpdateEndpoint = async (req, res) => {
-  console.log('Updating at special endpoint', { ['req.params.someSpecialParam']: req.params.someSpecialParam })
-  // do stuff with someSpecialParam then update
-  return exports.updateSingleById(req, res);
-}
 
 // list api functions
 exports.getListWithArgs = async (req, res) => {
   const { query, pagination, sort, limit } = await apiUtils.buildMongoQueryFromUrlQuery(req.query);
+  const { products, totalPages, totalCount } = await utilFetchProductList({ query, pagination, sort, limit });
+  res.json({ products, totalPages, totalCount });
+}
+
+const utilFetchProductList = async ({ query, pagination, sort, limit, populate = ''}) => {
   // get count so we can determine total pages for front end to allow proper pagination
-  const count = pagination ? await Product.countDocuments(query) : null
-  const totalPages = count && Math.ceil(count / pagination.per)
+  const totalCount = pagination ? await Product.countDocuments(query) : null
+  const totalPages = totalCount && Math.ceil(totalCount / pagination.per)
   const products = await Product.find(query)
     .skip(pagination ? (pagination.page - 1) * pagination.per : null)
     .limit(pagination ? pagination.per : (limit || 500))
     .sort(sort)
+    .populate(populate)
     .catch(err => {
       console.log(err);
       throw new YoteError("There was a problem finding Product list", 404);
     });
-  res.json({ products, totalPages, totalCount: count });
+  return { products, totalPages, totalCount };
 }
 
 // other experimental/future todos
 exports.getSingleByArgs = async (req, res) => { }
 exports.bulkUpdate = async (req, res) => { }
+
+// custom api functions
+exports.createProductWithRequiredParam = async (req, res) => {
+  const { requiredParam } = req.params;
+  console.log('creating product with required param: ', requiredParam)
+  if (!requiredParam) throw new YoteError("Missing requiredParam", 404);
+  if (requiredParam !== 'super-fancy') throw new YoteError("Invalid requiredParam", 404);
+  const newProduct = new Product({ ...req.body, _createdBy: req.user._id })
+  const product = await newProduct.save().catch(err => {
+    console.log(err)
+    throw new YoteError("Error creating Product", 404)
+  });
+  res.json(product)
+} 
+
+exports.getLoggedInList = async (req, res) => {
+  console.log('getting logged in list');
+  const { query, pagination, sort, limit } = await apiUtils.buildMongoQueryFromUrlQuery(req.query);
+  const combinedQuery = {
+    $and: [
+      query
+      , { _createdBy: req.user._id }
+    ]
+  }
+  const { products, totalPages, totalCount } = await utilFetchProductList({ query: combinedQuery, pagination, sort, limit });
+  res.json({ products, totalPages, totalCount });
+}
+
+
+exports.updateMyProductById = async (req, res) => {
+  console.log('updating my product by id');
+  let oldProduct = await Product.findOne({_id: req.params.id, _createdBy: req.user._id}).catch(err => {
+    console.log(err)
+    throw new YoteError("Error finding Product", 404)
+  });
+  if(!oldProduct) throw new YoteError("Could not find matching Product", 404);
+  oldProduct = Object.assign(oldProduct, req.body)
+  const product = await oldProduct.save().catch(err => {
+    console.log(err)
+    throw new YoteError("Could not update Product", 404)
+  });
+  res.json(product)
+}

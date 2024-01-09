@@ -42,9 +42,9 @@ import {
 // CREATE
 export const sendCreateProduct = createAsyncThunk(
   'product/sendCreate'
-  , async (newProduct) => {
-    const endpoint = `/api/products`;
-    const response = await apiUtils.callAPI(endpoint, 'POST', newProduct);
+  , async ({ endpoint, method = 'POST', ...newProduct }) => {
+    endpoint = endpoint ? `/api/products/${endpoint}` : `/api/products`;
+    const response = await apiUtils.callAPI(endpoint, method, newProduct);
     // The value we return becomes the `fulfilled` action payload
     return response;
   }
