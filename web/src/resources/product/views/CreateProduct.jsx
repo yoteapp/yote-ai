@@ -30,7 +30,7 @@ const CreateProduct = () => {
     // optional, callback function to run when the server returns the new product
     , onResponse: (newProduct, error) => {
       if(error || !newProduct) {
-        alert(error?.message || 'An error occurred.')
+        alert(error || 'An error occurred.')
         history.replace(`/products`, location.state);
       } else {
         history.replace(`/products/${newProduct._id}`, location.state);

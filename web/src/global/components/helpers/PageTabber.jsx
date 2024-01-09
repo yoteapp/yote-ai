@@ -7,6 +7,7 @@ const PageTabber = ({
   pagination
   , setPage
   , totalPages
+  , totalCount
   , onSetPage = () => { }
 }) => {
 
@@ -103,8 +104,8 @@ const PageTabber = ({
           </button>
         </nav>
         <p className="">
-          Showing <span className="">{(pagination.page * pagination.per) - (pagination.per - 1)}</span> to <span className="">{pagination.page * pagination.per}</span> of{' '}
-          <span className="">about {pagination.per * totalPages || "--"}</span> results
+          Showing <span className="">{(pagination.page * pagination.per) - (pagination.per - 1)}</span> to <span className="">{totalPages == 1 ? totalCount : pagination.page * pagination.per}</span> of{' '}
+          <span className="">{totalCount }</span> results
         </p>
       </div>
     </div>
@@ -117,6 +118,7 @@ PageTabber.propTypes = {
     , per: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired
   }).isRequired
   , totalPages: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired
+  , totalCount: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired
   , setPage: PropTypes.func.isRequired
 }
 

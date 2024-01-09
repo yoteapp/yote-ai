@@ -12,6 +12,7 @@ const PaginatedList = ({
   , per
   , setPage
   , totalPages
+  , totalCount
 }) => {
   // TODO: Add UI to use setPer
   const listRef = React.useRef(null);
@@ -23,6 +24,7 @@ const PaginatedList = ({
           pagination={{ page: page, per: per }}
           setPage={setPage}
           totalPages={totalPages}
+          totalCount={totalCount}
           onSetPage={() => listRef.current.scrollIntoView({ behavior: 'smooth' })} // scroll to top of list when page changes
         />
         :
@@ -38,6 +40,7 @@ PaginatedList.propTypes = {
   , per: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
   , setPage: PropTypes.func
   , totalPages: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+  , totalCount: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
 }
 
 PaginatedList.defaultProps = {
