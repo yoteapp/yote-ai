@@ -40,6 +40,11 @@ import {
  */
 
 // CREATE
+/**
+ * @param {object} args - the new product object plus the optional endpoint and method
+ * @param {string} args.endpoint - the endpoint to send the update to (optional)
+ * @param {string} args.method - the http method to use (optional, defaults to POST)
+ */
 export const sendCreateProduct = createAsyncThunk(
   'product/sendCreate'
   , async ({ endpoint, method = 'POST', ...newProduct }) => {
