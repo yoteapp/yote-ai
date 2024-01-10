@@ -8,7 +8,7 @@ import WaitOn from '../../../global/components/helpers/WaitOn';
 
 // import services
 // import { useGetProductById } from '../productService';
-import { useGetUpdatableProduct, useSpecialUpdatableProduct } from '../productService';
+import { useGetUpdatableProduct } from '../productService';
 
 // import resource components
 import ProductLayout from '../components/ProductLayout.jsx'
