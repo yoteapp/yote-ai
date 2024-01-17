@@ -33,7 +33,7 @@ const SingleProduct = () => {
 
   // by using the sendMutation function we can essentially patch the product in one go without setting the form state at all
   const handleToggleFeatured = () => {
-    sendMutation({ featured: !product.featured }).then(res => {
+    sendMutation({ featured: !product.featured }).then(({payload, error}) => {
       // can do stuff with the response here if needed
     });
   }

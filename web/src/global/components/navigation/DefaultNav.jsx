@@ -44,6 +44,7 @@ const DefaultNav = () => {
         <ul className="list-none p-0 flex flex-row">
           <li><NavLink to="/" className="p-2 block">Home</NavLink></li>
           <li><NavLink to="/products" className="p-2 block">Products</NavLink></li>
+          <li><NavLink to="/products/mine" className="p-2 block">My Products</NavLink></li>
         </ul>
         {!loggedInUser ?
           <ul className="list-none p-0 flex flex-row">

@@ -16,11 +16,28 @@ import SearchableProductList from './views/SearchableProductList.jsx';
 import SingleProduct from './views/SingleProduct.jsx';
 import UpdateProduct from './views/UpdateProduct.jsx';
 
+import MyProducts from './views/MyProducts.jsx';
+import CreateProductWithRestriction from './views/CreateProductWithRestriction.jsx';
+
 const ProductRouter = () => {
   const location = useLocation();
   const productId = location.pathname.split('/')[1];
   return (
     <Switch>
+      <YTRoute
+        breadcrumbs={[{ display: 'My Products', path: null }]}
+        component={MyProducts}
+        login={true}
+        exact
+        path="/products/mine"
+      />
+      <YTRoute
+        breadcrumbs={[{ display: 'All products', path: '/products' }, { display: 'New ', path: null }]}
+        component={CreateProductWithRestriction}
+        login={true}
+        exact
+        path="/products/new-with-restriction"
+      />
       <YTRoute
         breadcrumbs={[{ display: 'All products', path: null }]}
         component={ProductList}

@@ -1,4 +1,10 @@
 /**
+ * In YOTE, we use a pattern of having a service file for each resource. The service file is where we define all of the
+ * actions that can be performed on the resource. This includes all of the CRUD actions as well as any other actions
+ * that might be specific to the resource. For example, we might have a `sendInvite` action for a user resource.
+ * 
+ * Product Service is an example of a resource service file.
+ * 
  * This set of hooks is how we'll interact with the productStore. The idea is to provide a simple hooks-based api to get what
  * we need from the store without having to use `dispatch`, `connect`, `mapStoreToProps`, and all that stuff
  * in the components.
@@ -6,7 +12,7 @@
 
 import { useSelector, useDispatch } from 'react-redux'
 import apiUtils from '../../global/utils/api';
-import { parseQueryArgs, selectSingleById } from '../../global/utils/storeUtils';
+import { createEndpoint, parseQueryArgs, selectSingleById } from '../../global/utils/storeUtils';
 
 // import all of the actions from the store
 import {
@@ -40,7 +46,9 @@ import {
 /**
  * Use this hook to handle the creation of a new product.
  * @param {Object} initialState - The initial state of the product (optional)
- * @param {Function} handleResponse - The function to call when the product is successfully created
+ * @param {Function} onResponse - The function to call when the product is successfully created (optional)
+ * @param {string} endpoint - The specific endpoint to hit when creating the product (optional)
+ * @param {string} method - The http method to use when creating the product (optional, defaults to POST)
  * 
  * @returns an object containing fetch info and the following:
  * - `newProduct` as `data`: the new product object as it currently exists in state, initially the default product
@@ -55,7 +63,7 @@ import {
  *     someKey: 'someValue'
  *   }
  *   // optional, callback function that receives the response from the server
- *   , handleResponse: (product, error) => {
+ *   , onResponse: (product, error) => {
  *     if(error || !product) {
  *       alert(error || "An error occurred.")
  *     }
@@ -73,11 +81,11 @@ import {
  *   </WaitOn>
  * )
  */
-export const useCreateProduct = ({ initialState = {}, onResponse = () => { } }) => {
+export const useCreateProduct = ({ initialState = {}, onResponse = () => { }, endpoint, method }) => {
   const dispatch = useDispatch();
   // set up product specific stuff to be used by the shared hook
   const defaultProductQuery = useGetDefaultProduct();
-  const sendMutation = (mutatedProduct) => dispatch(sendCreateProduct(mutatedProduct));
+  const sendMutation = (mutatedProduct) => dispatch(sendCreateProduct({endpoint, method, ...mutatedProduct}));
 
   // the hook will return everything the caller needs to create a new product
   return useMutateResource({ resourceQuery: defaultProductQuery, sendMutation, initialState, onResponse });
@@ -127,16 +135,16 @@ export const useGetProductById = (id, forceFetch = false) => {
  * @returns an object containing fetch info and eventually the product (as `data`)
  * @returns an invalidate and refetch function for convenience
  */
- export const useGetProduct = (...args) => {
+export const useGetProduct = (...args) => {
   const dispatch = useDispatch();
   const { endpoint, listArgs } = parseQueryArgs(args);
- // set up product specific stuff to be used by the shared hook
- const productStore = useSelector(({ product }) => product);
- const fetchProduct = endpoint ? fetchSingleProductAtEndpoint : fetchSingleProduct;
- const sendFetchSingle = (queryString) => dispatch(fetchSingleIfNeeded(queryString, fetchProduct));
- const sendInvalidateSingle = (queryString) => dispatch(invalidateQuery(queryString));
- // return the (now product specific) hook
- return useGetResource({ listArgs, fromStore: productStore, sendFetchSingle, sendInvalidateSingle, endpoint });
+  // set up product specific stuff to be used by the shared hook
+  const productStore = useSelector(({ product }) => product);
+  const fetchProduct = endpoint ? fetchSingleProductAtEndpoint : fetchSingleProduct;
+  const sendFetchSingle = (queryString) => dispatch(fetchSingleIfNeeded(queryString, fetchProduct));
+  const sendInvalidateSingle = (queryString) => dispatch(invalidateQuery(queryString));
+  // return the (now product specific) hook
+  return useGetResource({ listArgs, fromStore: productStore, sendFetchSingle, sendInvalidateSingle, endpoint });
 }
 
 /**
@@ -175,16 +183,17 @@ export const useGetProductList = (...args) => {
  * 
  * @returns the sendUpdateProduct action wrapped in dispatch
  * @example // to use in a component
- * // access the update action
- * const { sendUpdateProduct } = useUpdateProduct();
+ * // access the update action, pass in optional endpoint and method to hit a custom endpoint
+ * const { sendUpdateProduct } = useUpdateProduct({ endpoint: myEndpoint, method: 'POST'});
  * // dispatch the update action
  * sendUpdateProduct(updatedProduct);
  */
-export const useUpdateProduct = () => {
+export const useUpdateProduct = ({ endpoint, method }) => {
   const dispatch = useDispatch();
+  const sendMutation = (mutatedProduct) => dispatch(sendUpdateProduct({ endpoint, method, ...mutatedProduct }));
   return {
     // return the update action
-    sendUpdateProduct: (updatedProduct) => dispatch(sendUpdateProduct(updatedProduct))
+    sendUpdateProduct: sendMutation
   }
 }
 
@@ -275,3 +284,109 @@ export const useProductFromMap = (id) => {
   const product = useSelector(({ product: productStore }) => selectSingleById(productStore, id));
   return product
 }
+
+
+// CUSTOM ENDPOINT EXAMPLE
+
+
+// FETCH
+// once plugged in to the product hook, this will create an endpoint that looks like `/api/products/logged-in`
+// on the server side, this will filter the queried list of products to only those created by the logged in user.
+const productsByLoggedInUserEndpoint = createEndpoint('logged-in');
+
+/**
+ * This is the simplest example of how we implement a custom fetch endpoint.
+ * We define the endpoint using the `createEndpoint` helper function (see above).
+ * Then we create a custom hook that sets up the fetch action with the custom endpoint.
+ * We name the hook to describe the purpose of the endpoint.
+ * @param {string} id - the id of the product to be fetched. 
+ * @note we could add other params here if the endpoint required them
+ * @returns the same thing as `useGetProduct` but set up to use a custom fetch endpoint
+ */
+export const useProductByLoggedIn = (id) => {
+  // populate the endpoint (this one takes no params, but it could)
+  const populatedEndpoint = productsByLoggedInUserEndpoint();
+  // plug the endpoint into the standard hook and return the result to be used in the component
+  return useGetProduct(populatedEndpoint, { _id: id });
+}
+
+/**
+ * This is the same as above, but for a list of products.
+ * @param {object} query - the query object to be used in the fetch request 
+ * @returns the same thing as `useGetProductList` but set up to use a custom fetch endpoint
+ */
+export const useProductListByLoggedIn = (query) => {
+  // populate the endpoint (this one takes no params, but it could)
+  const populatedEndpoint = productsByLoggedInUserEndpoint();
+  // plug the endpoint into the standard hook and return the result to be used in the component
+  return useGetProductList(populatedEndpoint, query);
+}
+
+// UPDATE BY LOGGED IN USER
+// BONUS: if you search the codebase for the string `logged-in/:id` you'll quickly find the server side implementation of this endpoint because it's the same syntax as express
+const updateProductByLoggedInUserEndpoint = createEndpoint('logged-in/:id');
+/**
+ * This is an example of how we implement a custom update endpoint, in this case for a logged in user.
+ * The idea is to package up all of the logic that is specific to this endpoint in a custom hook, then expose
+ * the update action with minimal code required in the component.
+ * First we create the endpoint using the `createEndpoint` helper function (see above).
+ * Then we create a custom hook that sets up the update action with the custom endpoint.
+ * We name the hook to describe the purpose of the endpoint, and we pass in any params that are required by the endpoint.
+ * @param {object} args - an object contaning the following:
+ * @param {string} args.id - the id of the product to be updated. 
+ * @note we could add other params here if the endpoint required them, or this could be a string instead of an object if adequate
+ * @returns the dispatchable update product action with the endpoint already plugged in
+ * @note this hook is meant for cases where you already have the product and just need the update action (e.g. in a list item)
+ * @example // to use in a component
+ * // access the update action
+ * const { sendUpdateProduct } = useUpdateMyProduct({ id: productId });
+ * // dispatch the update action
+ * const someHandler = () => {
+ *  sendUpdateProduct(updatedProduct);
+ * }
+ */
+export const useUpdateProductByLoggedInUser = ({ id }) => {
+  const updateEndpoint = updateProductByLoggedInUserEndpoint({ id });
+  const { sendUpdateProduct } = useUpdateProduct({ endpoint: updateEndpoint, method: 'PUT' });
+  return {
+    sendUpdateProduct
+  }
+}
+
+// FETCH AND UPDATE BY LOGGED IN USER
+/**
+ * This hook composes the `useProductByLoggedIn` and `useUpdateProductByLoggedInUser` hooks to create a single hook
+ * that fetches and updates a product by a logged in user.
+ * @param {object} args - an object contaning the following:
+ * @param {string} args.id - the id of the product to be fetched and updated.
+ * @param {Function} args.onResponse - an optional callback function that receives the updated product and error.
+ * @returns the same thing as `useGetUpdatableProduct` but set up to use custom fetch and update endpoints
+ */
+export const useGetUpdatableProductByLoggedInUser = ({ id, onResponse = () => { } }) => {
+  const productQuery = useProductByLoggedIn(id);
+  const { sendUpdateProduct } = useUpdateProductByLoggedInUser({ id });
+  return useMutateResource({ resourceQuery: productQuery, sendMutation: sendUpdateProduct, onResponse });
+}
+
+// CREATE WITH REQUIRED PARAMS
+const createProductWithRequiredParamsEndpoint = createEndpoint('special/:requiredParam');
+
+/**
+ * This is an example of a custom create endpoint. In this case we require a requiredParam to be passed in.
+ * This could be used to pass into middleware to check permissions, or otherwise enforce some kind of restriction.
+ * @note this is a contrived example, but the pattern is useful for more complex cases
+ * @param {args} args - an object containing the following:
+ * @param {string} args.requiredParam - the required param for the endpoint
+ * @param {object} args.initialState - the initial state of the product (optional)
+ * @param {Function} args.onResponse - the function to call when the product is successfully created (optional)
+ * @returns the same thing as `useCreateProduct` but set up to use a custom create endpoint
+ */
+export const useCreateProductWithRequiredParams = ({ requiredParam, initialState, onResponse }) => {
+  const endpoint = createProductWithRequiredParamsEndpoint({ requiredParam });
+  return useCreateProduct({ initialState, onResponse, endpoint, method: 'POST' });
+}
+
+
+
+
+

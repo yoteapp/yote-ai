@@ -29,16 +29,6 @@ import {
 
 
 // First define all API calls for product
-
-// define and export the strings for the different specific product endpoints once here because the idea of using strings in the component gives me hives.
-// we'll catch for these strings on the server side and apply the correct permissions to the query.
-// these are passed in to the productService hooks at the component level as the endpoint argument.
-// NOTE: If any of these are functions that require arguments, return null until all arguments are provided so the fetching hook will hold off on the fetch instead of calling an endpoint that will fail.
-// export const myExampleEndpoint = 'example-endpoint';
-// export const myEndpointWithArgs = (arg1, arg2) => {
-//   if(!arg1 || !arg2) return null;
-//   return `example-endpoint/${arg1}/${arg2}`;
-// }
 /**
  * The functions below, called thunks, allow us to perform async logic. They
  * can be dispatched like a regular action: `dispatch(incrementAsync(10))`. This
@@ -50,11 +40,16 @@ import {
  */
 
 // CREATE
+/**
+ * @param {object} args - the new product object plus the optional endpoint and method
+ * @param {string} args.endpoint - the endpoint to send the update to (optional)
+ * @param {string} args.method - the http method to use (optional, defaults to POST)
+ */
 export const sendCreateProduct = createAsyncThunk(
   'product/sendCreate'
-  , async (newProduct) => {
-    const endpoint = `/api/products`;
-    const response = await apiUtils.callAPI(endpoint, 'POST', newProduct);
+  , async ({ endpoint, method = 'POST', ...newProduct }) => {
+    endpoint = endpoint ? `/api/products/${endpoint}` : `/api/products`;
+    const response = await apiUtils.callAPI(endpoint, method, newProduct);
     // The value we return becomes the `fulfilled` action payload
     return response;
   }
@@ -101,11 +96,17 @@ export const fetchProductListAtEndpoint = createAsyncThunk(
 );
 
 // UPDATE
+/**
+ * @param {object} args - the updated product object plus the optional endpoint and method
+ * @param {string} args.endpoint - the endpoint to send the update to (optional)
+ * @param {string} args.method - the http method to use (optional, defaults to PUT)
+ */
 export const sendUpdateProduct = createAsyncThunk(
   'product/sendUpdate'
-  , async ({ _id, ...updates }) => {
-    const endpoint = `/api/products/${_id}`;
-    const response = await apiUtils.callAPI(endpoint, 'PUT', updates);
+  , async ({ endpoint, method = 'PUT', ...updates }) => {
+    const { _id } = updates;
+    endpoint = endpoint ? `/api/products/${endpoint}` : `/api/products/${_id}`;
+    const response = await apiUtils.callAPI(endpoint, method, updates);
     // The value we return becomes the `fulfilled` action payload
     return response;
   }
