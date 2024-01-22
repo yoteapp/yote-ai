@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 
-const apiUtils = require('../../global/api/apiUtils')
-
 const userSchema = mongoose.Schema({
   created:                  { type: Date, default: Date.now }
   , updated:                { type: Date, default: Date.now }
@@ -44,4 +42,4 @@ userSchema.statics = {
   }
 }
 
-const User = mongoose.model('User', userSchema);
+module.exports = mongoose.model('User', userSchema);

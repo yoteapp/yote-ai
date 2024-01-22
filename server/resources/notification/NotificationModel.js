@@ -11,7 +11,7 @@
 
 const mongoose = require('mongoose');
 const apiUtils = require('../../global/api/apiUtils')
-let ObjectId = mongoose.SchemaTypes.ObjectId;
+const { ObjectId } = mongoose.SchemaTypes;
 
 const notificationSchema = mongoose.Schema({
   created: { type: Date, default: Date.now }
@@ -45,4 +45,4 @@ notificationSchema.statics.getDefault = () => {
   return defaultObj;
 }
 
-const Notification = mongoose.model('Notification', notificationSchema);
+module.exports = mongoose.model('Notification', notificationSchema);
