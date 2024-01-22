@@ -117,7 +117,7 @@ export const useGetResource = ({
   }, [readyToFetch, sendFetchSingle, queryString, isFocused]);
 
   // get the query info from the store
-  const { status, error, otherData, previousVersion } = selectQuery(fromStore, queryString);
+  const { status, error, otherData, previousVersion, receivedAt } = selectQuery(fromStore, queryString);
 
   // get current resource from the store (if it exists)
   const resource = selectSingleByQueryKey(fromStore, queryString);
@@ -150,6 +150,7 @@ export const useGetResource = ({
     , isEmpty
     , invalidate
     , refetch
+    , receivedAt
   }
 }
 
@@ -216,7 +217,7 @@ export const useGetResourceList = ({
   }, [readyToFetch, sendFetchList, queryString, isFocused]);
 
   // get the query info from the store
-  const { status, error, totalPages, totalCount, ids, otherData } = selectQuery(fromStore, queryString);
+  const { status, error, totalPages, totalCount, ids, otherData, receivedAt } = selectQuery(fromStore, queryString);
 
   // get current list items (if they exist)
   const resources = selectListItems(fromStore, queryString);
@@ -280,6 +281,7 @@ export const useGetResourceList = ({
     , invalidate
     , pagination
     , refetch
+    , receivedAt
   }
 }
 
@@ -303,6 +305,7 @@ export const useMutateResource = ({
   , sendMutation
   , initialState = {} // optional initial state that will override the data returned from the resourceQuery
   , onResponse = () => { }
+  , isCreate = false
 }) => {
   // STATE
   // set up a state variable to hold the resource, start with what was passed in as initialState (or an empty object)
@@ -318,7 +321,7 @@ export const useMutateResource = ({
       });
     }
   }, [initialState])
-  
+
   useEffect(() => {
     // once we have the fetched resource, set it to state
     // make sure we only do this if necessary to avoid an infinite loop
@@ -366,8 +369,13 @@ export const useMutateResource = ({
       resetFormState();
       console.error("An error occured while attempting mutation: ", response.error);
     } else {
-      // set the returned resource to state so any changes are reflected in the form without a refresh
-      setFormState(response.payload);
+      if(isCreate) {
+        // reset the form state to the original resource so it's ready for another create
+        resetFormState();
+      } else {
+        // set the returned resource to state so any changes made by the server are reflected in the form without a refresh
+        setFormState(response.payload);
+      }
     }
     // send the response to the callback function
     onResponse(response.payload, response.error?.message);
@@ -388,7 +396,7 @@ export const useMutateResource = ({
    * @returns the thenable response from the server ({ payload: resource, error: error })
    */
   const sendMutationWithComponentData = (data) => {
-    const dataToSend = { ...newResource, ...data}
+    const dataToSend = { ...newResource, ...data }
     return sendMutation(dataToSend).then((response) => {
       handleResponse(response);
       return response;
@@ -399,7 +407,7 @@ export const useMutateResource = ({
   /**
    * Undo the last mutation (for updates only). Dispatches the original update action with previous version of the resource (if one exists)
    * @param {SyntheticEvent} e - the form submit event
-   */ 
+   */
   const handleUndoMutation = (e = null) => {
     e?.preventDefault && e.preventDefault();
     // reset the form state to the original resource
@@ -407,7 +415,7 @@ export const useMutateResource = ({
       setIsWaiting(true)
       sendMutation(resourceQuery.previousVersion).then(handleResponse)
     }
-  }   
+  }
 
   // let the component know if there are pending changes that need to be saved/cancelled
   /**
@@ -453,7 +461,7 @@ const utilSetNestedValue = (obj, path, value) => {
 }
 
 
- // TYPES - allows jsdoc comments to give us better intellisense
+// TYPES - allows jsdoc comments to give us better intellisense
 /**
  * the basic object returned from a standard service hook (e.g. StandardHookResponse = useGetProductById(productId))
  * @typedef {object} ServiceHookResponse
