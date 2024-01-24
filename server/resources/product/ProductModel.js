@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const apiUtils = require('../../global/api/apiUtils')
+const { ObjectId } = mongoose.SchemaTypes;
 
 const productSchema = mongoose.Schema({
   created:                  { type: Date, default: Date.now }
@@ -8,8 +9,7 @@ const productSchema = mongoose.Schema({
   , description:            { type: String }
   , featured:               { type: Boolean, default: false }
   , userFavorite:           { type: Boolean, default: false } // this is a contrived example to show how a user could update their own product with a custom endpoint
-  , _createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
-  
+  , _createdBy: { type: ObjectId, ref: 'User' }
 });
 
 // schema hooks
@@ -39,4 +39,4 @@ productSchema.index({
   , description: 'text'
 })
 
-const Product = mongoose.model('Product', productSchema);
+module.exports = mongoose.model('Product', productSchema);

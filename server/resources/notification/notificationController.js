@@ -8,8 +8,7 @@
  * NOTE: HOWEVER, you still need to make sure to account for
  * any model changes on the client
  */
-const NotificationSchema = require('./NotificationModel');
-const Notification = require('mongoose').model('Notification');
+const Notification = require('./NotificationModel');
 const YoteError = require('../../global/helpers/YoteError');
 const apiUtils = require('../../global/api/apiUtils');
 

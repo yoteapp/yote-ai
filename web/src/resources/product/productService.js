@@ -85,10 +85,10 @@ export const useCreateProduct = ({ initialState = {}, onResponse = () => { }, en
   const dispatch = useDispatch();
   // set up product specific stuff to be used by the shared hook
   const defaultProductQuery = useGetDefaultProduct();
-  const sendMutation = (mutatedProduct) => dispatch(sendCreateProduct({endpoint, method, ...mutatedProduct}));
+  const sendMutation = (mutatedProduct) => dispatch(sendCreateProduct({ endpoint, method, ...mutatedProduct }));
 
   // the hook will return everything the caller needs to create a new product
-  return useMutateResource({ resourceQuery: defaultProductQuery, sendMutation, initialState, onResponse });
+  return useMutateResource({ resourceQuery: defaultProductQuery, sendMutation, initialState, onResponse, isCreate: true });
 }
 
 // READ

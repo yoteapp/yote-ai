@@ -1,5 +1,5 @@
 
-const User = require('mongoose').model('User');
+const User = require('./UserModel');
 const YoteError = require('../../global/helpers/YoteError');
 const apiUtils = require('../../global/api/apiUtils')
 
