@@ -56,13 +56,13 @@ export const convertListToMap = (items = [], key = '_id') => {
 // the initial state for all resource stores
 export const INITIAL_STATE = {
   /**
-   * "byId" is an object map of all resource items in the store. The maps keys are
+   * "byId" is an object map of all resource items in the store. The map's keys are
    * the Mongo ids of the objects by default. This is where all resource objects will live.
    */
   byId: {}
 
   /**
-   * "queries" is an object map of all server fetches for resources. The maps keys are listArgs
+   * "queries" is an object map of all server fetches for resources. The map's keys are listArgs
    * in the case of list fetches and Mongo ids in the case of single fetches.
    * Each individual query looks like this:
    * 
@@ -120,7 +120,7 @@ export const handleAddManyToList = (state, action, cb) => {
   const query = state.listQueries[queryKey];
   if(query && ids) {
     // add to the list of ids and remove duplicates
-    query.ids = [...new Set([...query.ids, ...ids])];
+    query.ids = query.ids ? [...new Set([...query.ids, ...ids])] : ids;
   } else {
     // console.log('Could not find list');
   }
@@ -156,6 +156,8 @@ export const handleUpdateManyInMap = (state, action, cb) => {
 export const handleCreateFulfilled = (state, action, cb) => {
   // console.log('action', action);
   const resource = action?.payload || {};
+  // by default we'll invalidate all lists when a new resource is created, but we can pass in preserveLists: true to the action to prevent this
+  const { preserveLists } = action?.meta?.arg || {};
   // add it to the map
   state.byId[resource._id] = resource;
   // create a query object for it
@@ -165,18 +167,20 @@ export const handleCreateFulfilled = (state, action, cb) => {
     , receivedAt: Date.now()
     , expirationDate: utilNewExpirationDate()
   }
-
-  // A new resource was just created. Rather than dealing with adding it to a list or invalidating specific lists from the component we'll just invalidate the listQueries here.
-  Object.keys(state.listQueries)?.forEach(queryKey => {
-    state.listQueries[queryKey].didInvalidate = true;
-  });
+  if(!preserveLists) {
+    // A new resource was just created. Rather than dealing with adding it to a list or invalidating specific lists from the component we'll just invalidate the listQueries here.
+    Object.keys(state.listQueries)?.forEach(queryKey => {
+      state.listQueries[queryKey].didInvalidate = true;
+    });
+  }
   cb && cb(state, action);
 }
 
 export const handleFetchSinglePending = (state, action, cb) => {
   // update or create a query object for it in the queries map
-  state.singleQueries[action.meta.arg] = state.singleQueries[action.meta.arg] || {};
-  state.singleQueries[action.meta.arg] = { ...state.singleQueries[action.meta.arg], id: action.meta.arg, status: 'pending', didInvalidate: false, error: null };
+  const singleQuery = state.singleQueries[action.meta.arg] || {};
+  // preserve the existing id if it's already there, otherwise use the query arg as the id
+  state.singleQueries[action.meta.arg] = { ...singleQuery, id: singleQuery.id || action.meta.arg, status: 'pending', didInvalidate: false, error: null };
   cb && cb(state, action);
 }
 
@@ -303,10 +307,13 @@ export const handleMutationFulfilled = (state, action, cb) => {
   singleQuery.status = 'fulfilled';
   singleQuery.receivedAt = Date.now();
   singleQuery.expirationDate = utilNewExpirationDate();
-  // A resource was just updated. Rather than dealing with adding it to a list or invalidating specific lists from the component we'll just invalidate the listQueries here.
-  Object.keys(state.listQueries)?.forEach(queryKey => {
-    state.listQueries[queryKey].didInvalidate = true;
-  });
+  // by default we'll invalidate all lists when a resource is updated, but we can pass in preserveLists: true to the action to prevent this
+  const { preserveLists } = action?.meta?.arg || {};
+  if(!preserveLists) {
+    Object.keys(state.listQueries)?.forEach(queryKey => {
+      state.listQueries[queryKey].didInvalidate = true;
+    });
+  }
   cb && cb(state, action);
 }
 
@@ -340,7 +347,7 @@ export const handleMutateManyPending = (state, action, cb) => {
 }
 
 export const handleMutateManyFulfilled = (state, action, listKey, cb) => {
-  const { [listKey]: resourceList, message } = action?.payload || {};
+  const { [listKey]: resourceList } = action?.payload || {};
   if(resourceList && resourceList.length) {
     resourceList?.forEach(resource => {
       // replace the previous version in the map with the new one from the server
@@ -423,7 +430,7 @@ export const handleDeleteRejected = (state, action, cb) => {
  * @param {Function} listFetch - the fetch action creator defined in the resource store (e.g. fetchProductList)
  * @param {string} queryKey - the key used to access the query from the store
  * @param {string} listKey - the name of the list returned from the server (e.g. `products`)
- * @returns 
+ * @returns the thenable dispatch function or a resolved promise that returns the current list in the same format as the fetch response
  */
 export const handleFetchListIfNeeded = (dispatch, store, listFetch, queryKey, listKey) => {
   // validate arguments
@@ -456,8 +463,8 @@ export const handleFetchListIfNeeded = (dispatch, store, listFetch, queryKey, li
  * @param {Function} dispatch - the dispatch function from the useDispatch hook
  * @param {Object} store - the resource specific store (e.g. productStore)
  * @param {Function} singleFetch - the fetch action creator defined in the resource store (e.g. fetchSingleProduct)
- * @param {*} queryKey 
- * @returns 
+ * @param {string} queryKey - the key used to access the query from the store
+ * @returns the thenable dispatch function or a resolved promise that returns the current single in the same format as the fetch response
  */
 export const handleFetchSingleIfNeeded = (dispatch, store, singleFetch, queryKey) => {
   // validate arguments
@@ -504,7 +511,7 @@ export const handleFetchSingleIfNeeded = (dispatch, store, singleFetch, queryKey
  * 
  * @param {object} resourceStore - supplied by useSelector hook in the service file
  * @param {string} queryKey - the key used to access the query from the map
- * @returns an array of resource objects matching the query's `ids` array
+ * @returns an array of resource objects matching the query's `ids` array or null if it hasn't been fetched yet
  */
 export const selectListItems = (resourceStore, queryKey) => {
   const listIds = resourceStore.listQueries[queryKey]?.ids;
@@ -519,7 +526,7 @@ export const selectListItems = (resourceStore, queryKey) => {
  * 
  * @param {object} resourceStore - supplied by useSelector hook in the service file
  * @param {string} id - the key used to access the query from the map (resource mongo id)
- * @returns the single resource from the store
+ * @returns the single resource from the store or null if it hasn't been fetched yet
  */
 export const selectSingleById = (resourceStore, id) => {
   return resourceStore.byId[id];
@@ -538,7 +545,16 @@ export const selectSingleByQueryKey = (resourceStore, queryKey) => {
  * 
  * @param {object} resourceStore - supplied by useSelector hook in the service file
  * @param {string} queryKey - the key used to access the query from the map
- * @returns the query object from the store
+ * @returns {{
+ *    status: 'pending' | 'fulfilled' | 'rejected',
+ *    ids: Array<string> | null, // for lists only
+ *    id: string | null, // for singles only
+ *    expirationDate: number | null, // for 'fulfilled' status only
+ *    receivedAt: number | null,
+ *    didInvalidate: boolean,
+ *    error: string | null, // for 'rejected' status only
+ *    otherData: object | null
+ * }} the query object from the store
  */
 export const selectQuery = (resourceStore, queryKey) => {
   const query = resourceStore.listQueries[queryKey] || resourceStore.singleQueries[queryKey];
@@ -581,25 +597,31 @@ export const parseQueryArgs = (args) => {
 /**
  * Build an endpoint string from a template and an object of arguments
  * @param {String} endpointTemplate - a string with optional placeholders for arguments (e.g. 'products/:id')
- * @returns {Function} a function that accepts an optional object of arguments matching the placeholders in the template and returns a string with the placeholders replaced with the argument values (e.g. ({id: 123}) => 'products/123')
+ * @returns {endpointBuilder} a function that accepts an optional object of arguments matching the placeholders in the template and returns a string with the placeholders replaced with the argument values (e.g. ({id: 123}) => 'products/123')
  */
 export const createEndpoint = (endpointTemplate) => {
-  return function(args = {}) {
+  /**
+   * Function to replace placeholders in the endpoint template with values from the provided arguments
+   * @param {Object} args - an object of arguments matching the placeholders in the template
+   * @returns {String|null} a string with the placeholders replaced with the argument values, or null if there are any remaining placeholders
+   */
+  function endpointBuilder(args = {}) {
     let endpoint = endpointTemplate;
 
     // Replace each placeholder in the template with the corresponding value from the args object
     for (const [key, value] of Object.entries(args)) {
-      if (value === undefined) {
+      if(value === undefined || value === null) {
         return null;
       }
-      endpoint = endpoint.replace(`:${key}`, value);
+      endpoint = endpoint.replace(`:${key}`, value?.toString());
     }
 
     // If there are any remaining placeholders in the endpoint, return null to hold off on the fetch until the endpoint is ready
-    if (/:[a-zA-Z0-9_]+/.test(endpoint)) {
+    if(/:[a-zA-Z0-9_]+/.test(endpoint)) {
+      console.error(`Endpoint template "${endpointTemplate}" has unresolved placeholders. Remaining placeholders: ${endpoint.match(/:[a-zA-Z0-9_]+/g).join(', ')}`);
       return null;
     }
-
     return endpoint;
   };
+  return endpointBuilder;
 }

@@ -56,13 +56,13 @@ export const convertListToMap = (items, key = '_id') => {
 // the initial state for all resource stores
 export const INITIAL_STATE = {
   /**
-   * "byId" is an object map of all resource items in the store. The maps keys are
+   * "byId" is an object map of all resource items in the store. The map's keys are
    * the Mongo ids of the objects by default. This is where all resource objects will live.
    */
   byId: {}
 
   /**
-   * "queries" is an object map of all server fetches for resources. The maps keys are listArgs
+   * "queries" is an object map of all server fetches for resources. The map's keys are listArgs
    * in the case of list fetches and Mongo ids in the case of single fetches.
    * Each individual query looks like this:
    * 

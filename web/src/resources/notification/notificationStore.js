@@ -70,13 +70,13 @@ export const sendDeleteNotification = createAsyncThunk(
 // next define the store's initial state
 const initialState = {
   /**
-   * "byId" is an object map of all notification items in the store. The maps keys are
+   * "byId" is an object map of all notification items in the store. The map's keys are
    * the Mongo ids of the objects by default. This is where all notification objects will live.
    */
   byId: {}
   
   /**
-   * "queries" is an object map of all server fetches for notifications. The maps keys are listArgs
+   * "queries" is an object map of all server fetches for notifications. The map's keys are listArgs
    * in the case of list fetches and Mongo ids in the case of single fetches.
    * Each individual query looks like this:
    * 
