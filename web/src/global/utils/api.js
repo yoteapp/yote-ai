@@ -15,8 +15,18 @@ const apiUtils = {
       credentials: 'same-origin',
       body: JSON.stringify(body)
     });
-    // response.ok info: https://developer.mozilla.org/en-US/docs/Web/API/Response/ok
-    if(response.ok) {
+    if(response.status && response.status === 401) {
+      // console.log("REDIRECT ME")
+      /**
+       * thoughts here. we want a way to loudly fail when the user is auto-logged out
+       * vs silently breaking
+       * i think a hard (non-redux) redirect is the way to go, since it should 
+       * refresh the user from the server and wipe anything currently in the store
+      */
+     window.location.reload(); // preserve location on redirect
+     
+     // response.ok info: https://developer.mozilla.org/en-US/docs/Web/API/Response/ok
+    } else if(response.ok) {
       return response.json();
     } else {
       const error = await response.json().catch(unhandledError => {
@@ -28,35 +38,10 @@ const apiUtils = {
     }
   }
 
-  // DEPRECATED: As of v3.0 this is no longer supported by our api. Remove before release.
-  // ported from yote actions. Used in productService to build endpoints for different types of list fetches.
-  // , buildEndpointFromListArgs(baseUrl, listArgs = ['all']) {
-  //   let endpoint = baseUrl;
-  //   if(listArgs.length === 1 && listArgs[0] !== "all") {
-  //     endpoint += `by-${listArgs[0]}`;
-  //   } else if(listArgs.length === 2 && Array.isArray(listArgs[1])) {
-  //     // length == 2 has it's own check, specifically if the second param is an array
-  //     // if so, then we need to call the "listByValues" api method instead of the regular "listByRef" call
-  //     // this can be used for querying for a list of products given an array of product id's, among other things
-  //     endpoint += `by-${listArgs[0]}-list?`;
-  //     // build query string
-  //     for(let i = 0; i < listArgs[1].length; i++) {
-  //       endpoint += `${listArgs[0]}=${listArgs[1][i]}&`
-  //     }
-  //   } else if(listArgs.length === 2) {
-  //     // ex: ("author","12345")
-  //     endpoint += `by-${listArgs[0]}/${listArgs[1]}`;
-  //   } else if(listArgs.length > 2) {
-  //     endpoint += `by-${listArgs[0]}/${listArgs[1]}`;
-  //     for(let i = 2; i < listArgs.length; i++) {
-  //       endpoint += `${listArgs[i]}`;
-  //     }
-  //   }
-  //   return endpoint
-  // }
-
   , queryStringFromObject(queryObject) {
     // console.log("QUERY STRING FROM OBJECT")
+    if(!queryObject) return "";
+    if(queryObject === "all") return "";
     // ex: { page: '1', per: '20' } to ?page=1&per=20
     return Object.entries(queryObject)
       // remove empties
@@ -76,7 +61,7 @@ const apiUtils = {
   , objectFromQueryString(queryString) {
     // convert search string into object notation
     // ex: ?page=1&per=20 to { page: '1', per: '20' }
-    // first grab just the query string meaning everything after the "?"
+    // first grab just the query string meaning everything after the ?
     queryString = queryString?.split("?")[1];
     if(!queryString) return {};
     return queryString.replace("?", "").split("&")
@@ -92,18 +77,23 @@ const apiUtils = {
   }
   /**
    * Checks if listArgs are ready to be fetched
-   * returns false if 1. listArgs is falsy, or 2. listArgs is an object with any undefined or empty array values
-   * returns true if listArgs is an object with no undefined or empty array values (this includes an empty object which is valid listArgs)
+   * returns false if listArgs is falsy, or an object with any undefined or empty array values
+   * returns true if listArgs is an object with no undefined or empty array values (this includes an empty object which is a valid listArgs)
    * @param {object} listArgs - an object containing the listArgs to be checked
    */
   , checkListArgsReady(listArgs) {
     // can't fetch if no list args are provided
     if(!listArgs) return false;
-    if(typeof listArgs !== "object") return false; 
+    if(typeof listArgs !== "object") return false;
     let listArgsReady = true;
     // if ANY list args are undefined or an array with 0 length, flip the boolean false
     Object.keys(listArgs).forEach(key => {
-      if((listArgs[key] === undefined) || (Array.isArray(listArgs[key]) && listArgs[key].length === 0)) {
+      const value = listArgs[key];
+      const isEmptyArray = Array.isArray(value) && value.length === 0;
+      const isEmptyString = value === "";
+      const valueIsEmpty = isEmptyArray || isEmptyString || value === undefined;
+
+      if(valueIsEmpty) {
         listArgsReady = false;
       }
     });
