@@ -3,16 +3,19 @@ const envSecrets = secrets[process.env.NODE_ENV];
 
 const config = {
   app: {
-    port: 80
+    port: process.env.PORT || 80
+    , url: 'yote-ai.f-labs.co'
     , useHttps: true
   }
 
   , session: {
     secret: envSecrets.sessionSecret
   }
+  
 
   , database: {
-    dbName: `yoteAi-staging`
+    uri: `mongodb+srv://${envSecrets.mongo_user}:${envSecrets.mongo_pass}@fugitive-misc-clients.7uyof.mongodb.net/`
+    , name: `yote`
   }
 
   , externalApis: {
