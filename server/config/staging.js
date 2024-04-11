@@ -12,7 +12,7 @@ const config = {
   }
 
   , database: {
-    dbName: `yote-staging`
+    dbName: `yoteAi-staging`
   }
 
   , externalApis: {

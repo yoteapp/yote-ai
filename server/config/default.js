@@ -18,7 +18,7 @@ const config = {
 
   , database: {
     uri: `mongodb://localhost/`
-    , name: `yote`
+    , name: `yoteAi`
   }
 
   , session: {
