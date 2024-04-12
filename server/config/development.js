@@ -6,6 +6,11 @@ const config = {
     secret: envSecrets.sessionSecret
   }
 
+  , database: {
+    uri: `mongodb+srv://${envSecrets.mongo_user}:${envSecrets.mongo_pass}@fugitive-misc-clients.7uyof.mongodb.net/`
+    , name: `yote`
+  }
+
   , externalApis: {
     mandrill: {
       apiKey: envSecrets.mandrill

@@ -1,12 +1,13 @@
 // https://github.com/lorenwest/node-config
 const config = require('config')
-// todo: after more research, i think dotenv better
-// require("dotenv").config();
+const env = process.env.NODE_ENV || 'development';
+
 
 // open libraries
 const express = require('express')
 require('express-async-errors');
 const path = require('path');
+const fs = require('fs');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
@@ -47,7 +48,7 @@ mongoose.connect(config.get('database.uri') + config.get('database.name'), {
 app.use(
   session({
     // secret: process.env.SECRET,
-    secret: "ABC123",
+    secret: config.get('session.secret'),
     resave: false,
     saveUninitialized: true,
     store: MongoStore.create({
@@ -76,6 +77,27 @@ app.use('/', router);
 // unified error handler
 app.use(errorHandler)
 
-app.listen(3030, () => {
-  console.log(`Example app listening at ${config.get('app.url')}`)
-})
+if(config.get('app.useHttps')) {
+  require('https').createServer({
+    minVersion: 'TLSv1.2'
+    , key: fs.readFileSync(`../server/config/https/${env}/privatekey.key`)
+    , cert: fs.readFileSync(`../server/config/https/${env}/cert_bundle.crt`)
+    , ca: [fs.readFileSync(`../server/config/https/${env}/gd_bundle-g2-g1.crt`)] 
+  // }, app).listen(9191); // NOTE: uncomment to test HTTPS locally
+  }, app).listen(443);
+
+  require('http').createServer((req, res) => {
+    console.log("REDIRECTING TO HTTPS");
+    res.writeHead(302, {
+      'Location': `https://${config.get('app.url')}${req.url}`
+      // 'Location': 'https://localhost:9191' + req.url // NOTE: uncomment to test HTTPS locally
+    });
+    res.end();
+  // }).listen(3031); // NOTE: uncomment to test HTTPS locally
+  }).listen(80);
+
+} else {
+  app.listen(config.get('app.port'), () => {
+    console.log(`yote app listening at ${config.get('app.port')}`)
+  })
+}

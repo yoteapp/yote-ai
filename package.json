@@ -1,0 +1,6 @@
+{
+  "scripts": {
+      "build-staging": "docker build -t fugitivelabs/yote-ai --platform linux/amd64 . && docker push fugitivelabs/yote-ai"
+      , "start": "cd ./server && node index.js"
+    }
+  }
